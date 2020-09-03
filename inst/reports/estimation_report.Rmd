@@ -1,0 +1,131 @@
+---
+title: "tsets: Estimation Report"
+date: "`r format(Sys.Date(), '%Y-%m-%d')`" 
+output: 
+  bookdown::pdf_document2: 
+    keep_tex: yes
+    toc: no
+header-includes:
+- \usepackage{booktabs}
+- \usepackage{fancyhdr}
+- \usepackage{tabu}
+- \usepackage{wrapfig}
+- \usepackage[table]{xcolor}
+- \usepackage{caption}
+- \pagestyle{fancy}
+- \fancyfoot[L]{\thepage}
+- \fancyhead{}
+params:
+  dir: NA
+  name: NA
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+\thispagestyle{fancy}
+\captionsetup[table]{labelformat=empty}
+\captionsetup[figure]{labelformat=empty}
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE}
+library(xts)
+options(kableExtra.latex.load_packages = FALSE)
+library(kableExtra)
+library(tsets)
+library(rmarkdown)
+x = readRDS(paste0(params$dir,"/tsets_estimate_tmp.rds"))
+firstDate = as.character(x$spec$target$index[1])
+lastDate = as.character(tail(x$spec$target$index,1))
+tab = tsets:::.tables.tsets.estimate(x, digits=4)
+```
+
+Series: `r params$name`
+
+Estimation Period: `r paste0("[",firstDate,"/",lastDate,"]")`
+
+Model: `r tab$model`
+
+X-Regressors: `r ifelse(x$spec$model$include.xreg==1, NCOL(x$spec$xreg$xreg),0)`
+
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE,results='asis',tab.cap = NULL}
+if (tab$n == 2) {
+p1 <- kable(tab$params[[1]], format = "latex", caption = "Model Parameter Summary", longtable = T, booktabs = T) %>% kable_styling(position = "float_left", font_size = 6, latex_options = c("striped"))
+p2 <- kable(tab$params[[2]], format = "latex",caption = "Model Parameter Summary[x-reg]",longtable = T, booktabs = T) %>% kable_styling(position = "float_left", font_size = 6, latex_options = c("striped"))
+p3 <- kable(tab$info,format = "latex", longtable = T, booktabs = FALSE, row.names = FALSE, align = "c") %>% kable_styling(position = "float_left", font_size = 6, latex_options = "hold_position")
+p3 <- gsub("\\\\hline", "", p3)
+p3 <- gsub("\\|", "", p3)
+p4 <- kable(tab$metrics, format = "latex", longtable = T, booktabs = FALSE, row.names = FALSE, align = "c") %>% kable_styling(position = "float_left", font_size = 6, latex_options = "hold_position")
+p4 <- gsub("\\\\hline", "", p4)
+p4 <- gsub("\\|", "", p4)
+cat(c("\\begin{table}[!htb]
+    \\begin{minipage}[t]{.6\\linewidth}
+      \\raggedleft",
+        p1,p3,p4,
+    "\\end{minipage}%
+    \\begin{minipage}[t]{.5\\linewidth}
+      \\raggedright",
+        p2,
+    "\\end{minipage} 
+\\end{table}"
+))
+} else {
+p1 <- kable(tab$params, format = "latex", caption = "Model Parameter Summary", longtable = T, booktabs = T) %>% kable_styling(position = "float_left", font_size = 8, latex_options = c("striped"))
+p2 <- kable(tab$info, format = "latex", caption = "Information Criteria", longtable = T, booktabs = T) %>% kable_styling(position = "float_left", font_size = 6)
+p3 <- kable(tab$metrics, format = "latex", caption = "Performance Metrics", longtable = T, booktabs = T) %>% kable_styling(position = "float_left", font_size = 6)
+cat(c("\\begin{table}[!htb]
+  \\begin{minipage}[t]{.6\\linewidth}
+    \\raggedleft",
+      p1,
+  "\\end{minipage}%
+  \\begin{minipage}[t]{.4\\linewidth}
+    \\raggedright",
+      p2,p3,
+  "\\end{minipage} 
+\\end{table}"
+))
+}
+```
+
+
+\clearpage
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE, fig.width = 10, fig.height = 12, fig.align = 'center', fig.cap = "\\label{fig:figs}ETS Decomposition"}
+plot(x)
+```
+
+
+\clearpage
+
+## Glossary of Key Metrics{-}
+
+### MAPE{-}
+
+The MAPE (mean absolute percentage error) is a popular measure for forecast accuracy and is defined as :
+
+$$ 
+MAPE = 100\frac{1}{N}\sum\limits_{i = 1}^N {\left( {\frac{{\left| {{y_t} - {{\hat y}_t}} \right|}}{{\left| {{y_t}} \right|}}} \right)}
+$$
+
+where $y_t$ denotes an observation and $\hat{y}_t$ denotes its forecast over N time periods. It has an asymmetric bias putting a heavier penalty on negative errors (when $y_t<\hat{y}_t$) than on positive errors.
+
+### MASE{-}
+
+The MASE  (mean absolute scaled error) scales the abolute error by a naive forecast so that values greater than one indicate that in-sample one-step forecasts from the naive method perform better than the forecast values under consideration.
+
+$$
+\frac{{\sum\limits_{i = 1}^N {\left| {{\varepsilon _t}} \right|} }}{{\frac{N}{{T - m}}\sum\limits_{i = m + 1}^T {\left| {{y_t} - {y_{t - i}}} \right|} }}
+$$
+
+where $m$ is the seasonal period, and $m=0$ for non seasonal data. It is a symmetric measure of forecast accuracy penalizing positive and negative forecast errors equally, and is scale invariant so can be used to compare forecasts across data sets with different scale.
+
+### AIC{-}
+
+Akaike’s Information Criterion (AIC) is a model selection metric penalizing the likelihood by the number of parameters used.
+
+$$
+2k - 2log\left(\hat L\right)
+$$
+where $k$ are the number of parameters and $L$ the maximum value of the likelihood function for the model. A model selected by the AIC after Gaussian MLE will give predictions equal to the conditional mean. It does not require nested models, but does require the same data be used.
+Asymptotically, minimizing the AIC is equivalent to minimizing the leave-one-out cross-validation mean squared error for cross-sectional data, and equivalent to minimizing the out-of-sample one-step forecast mean squared error for time series models. This property is what makes it such an attractive criterion for use in selecting models for forecasting.
+
