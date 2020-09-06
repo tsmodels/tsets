@@ -1,0 +1,27 @@
+language: r
+cache: packages
+sudo: required
+warnings_are_errors: false
+
+env:
+  global:
+    - R_BUILD_ARGS="--no-manual"
+    - R_CHECK_ARGS="--no-manual --as-cran"
+
+before_install:
+  - rm -rf tests
+  - |
+    WDIR=${PWD}
+    cd ..
+    git clone --single-branch https://github.com/tsmodels/tsmethods.git > /dev/null 2>&1
+    R -e "install.packages(c('xts','zoo'), type = 'source')"
+    R CMD INSTALL tsmethods
+    cd ${WDIR}
+
+after_failure:
+  - ./travis-tool.sh dump_logs
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change
