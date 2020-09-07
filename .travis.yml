@@ -13,11 +13,9 @@ before_install:
   - |
     WDIR=${PWD}
     cd ..
-    git clone --single-branch https://github.com/tsmodels/tsmethods.git > /dev/null 2>&1
-    git clone --single-branch https://github.com/tsmodels/tsaux.git > /dev/null 2>&1
-    R -e "install.packages(c('xts', 'zoo', 'lubridate', 'car'), type = 'source')"
-    R CMD INSTALL tsmethods
-    R CMD INSTALL tsaux
+    R -e "install.packages(c('devtools'), type = 'source')"
+    R -e "devtools::install_github("tsmodels/tsmethods"))"
+    R -e "devtools::install_github("tsmodels/tsaux"))"
     cd ${WDIR}
 
 after_failure:
