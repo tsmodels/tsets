@@ -40,7 +40,7 @@ ets_modelspec <- function(y, model = "AAN", damped = FALSE, power = FALSE, xreg 
   xreg <- check_xreg(xreg, index(y))
   # 5. Check transformation
   y_orig <- y
-  if (lambda == 1) lambda <- NULL
+  if (!is.null(lambda) & lambda == 1) lambda <- NULL
   if (substr(model,1,1) == "M") {
     if (!is.null(lambda)) {
       warning("\nMultiplicative error model cannot use a Box Cox transformation (lambda). Setting to NULL.")
