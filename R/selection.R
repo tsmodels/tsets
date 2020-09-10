@@ -31,6 +31,8 @@ auto_ets = function(y, xreg = NULL, lambda = NA, metric = "AIC", frequency = NUL
     transform <- box_cox(lambda = NA)
     y_t <- transform$transform(y, lambda = NA, frequency = frequency)
     transform$lambda <- attr(y_t,"lambda")
+  } else {
+    transform <- NULL
   }
   if (!additive_only) {
     sgrid[which(sgrid$model == "MAM")[2],"power"] <- 1

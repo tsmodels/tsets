@@ -40,14 +40,13 @@ ets_modelspec <- function(y, model = "AAN", damped = FALSE, power = FALSE, xreg 
   xreg <- check_xreg(xreg, index(y))
   # 5. Check transformation
   y_orig <- y
+  if (lambda == 1) lambda <- NULL
   if (substr(model,1,1) == "M") {
     if (!is.null(lambda)) {
       warning("\nMultiplicative error model cannot use a Box Cox transformation (lambda). Setting to NULL.")
-      transform <- box_cox(lambda = 1, lower = lambda_lower, upper = lambda_upper)
-      transform$lambda <- 1
+      transform <- NULL
     } else{
-      transform <- box_cox(lambda = 1, lower = lambda_lower, upper = lambda_upper)
-      transform$lambda <- 1
+      transform <- NULL
     }
   } else{
     y_orig <- y
@@ -56,8 +55,7 @@ ets_modelspec <- function(y, model = "AAN", damped = FALSE, power = FALSE, xreg 
         y <- transform$transform(y = y, frequency = frequency)
         transform$lambda <- attr(y, "lambda")
     } else{
-      transform <- box_cox(lambda = 1, lower = lambda_lower, upper = lambda_upper)
-      transform$lambda <- 1
+      transform <- NULL
     }
   }
   # 6. Check seasonality
