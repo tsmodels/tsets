@@ -44,6 +44,8 @@ tsbacktest.tsets.spec <- function(object, start = floor(length(object$target$y_o
             stop("\nalpha must be less than 1")
         }
         quantiles <- as.vector(sapply(1:length(alpha), function(k) c(alpha[k]/2, 1 - alpha[k]/2)))
+    } else {
+        quantiles <- NULL
     }
     # setup backtest indices
     horizon <- sapply(1:length(seqdates), function(i){

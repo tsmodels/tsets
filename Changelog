@@ -1,0 +1,3 @@
+# 2020-09-16 v0.1.6 [AG]
+- Fix to tsbacktest when no alpha (coverage parameter) is provided.
+- Added Changelog to package
