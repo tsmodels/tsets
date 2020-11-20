@@ -10,7 +10,7 @@ Prediction function for class \dQuote{tsets.estimate}.
 \usage{
 \method{predict}{tsets.estimate}(object, h = 12, newxreg = NULL,
 nsim = 1000, drop_na = TRUE, drop_negative = FALSE, redraw = TRUE,
-forc_dates = NULL, innov = NULL, ...)
+forc_dates = NULL, innov = NULL, custom_slope = NULL, ...)
 }
 \arguments{
 \item{object}{
@@ -47,6 +47,12 @@ This is an optional vector of uniform innovations which will be
 translated to regular innovations using the appropriate 
 distribution quantile function and model standard deviation. 
 The length of this vector should be equal to nsim x horizon.
+}
+\item{custom_slope}{
+Either a vector of length equal to the horizon or 1. This will be
+used to ovveride the slope state with a user provided set of 
+values (or strong views on growth). Only allowed for AA or MM
+type models (i.e. no MA type).
 }
 \item{\dots}{
 Not currently used

@@ -49,7 +49,8 @@ simulate.tsets.estimate  = function(object, nsim = 1, seed = NULL, h = NULL, new
   date_class <- attr(object$spec$target$sampling, "date_class")
   
   x <- rbind(matrix(0, ncol = ncol(x), nrow = 1), x)
-  model <- c(object$model$setup$include_trend, object$model$setup$include_seasonal, h, frequency, object$model$setup$normalized_seasonality, nsim)
+  custom_flag <- 0
+  model <- c(object$model$setup$include_trend, object$model$setup$include_seasonal, h, frequency, object$model$setup$normalized_seasonality, nsim, custom_flag)
   
   sigma_res <- object$model$setup$parmatrix["sigma",1]  
   type <- object$spec$model$type
@@ -130,10 +131,10 @@ simulate.tsets.estimate  = function(object, nsim = 1, seed = NULL, h = NULL, new
     pars[6] <- phi
   }
   out <- switch(type,
-               "1" = simulate_aaa(model_ = model, e_ = E, pars_ = pars, s0_ = svector, x_ = x),
-               "2" = simulate_mmm(model_ = model, e_ = E, pars_ = pars, s0_ = svector, x_ = x),
-               "3" = simulate_mam(model_ = model, e_ = E, pars_ = pars, s0_ = svector, x_ = x),
-               "4" = simulate_powermam(model_ = model, e_ = E, pars_ = pars, s0_ = svector, x_ = x))
+               "1" = simulate_aaa(model_ = model, e_ = E, pars_ = pars, s0_ = svector, x_ = x, slope_overide_ = matrix(1)),
+               "2" = simulate_mmm(model_ = model, e_ = E, pars_ = pars, s0_ = svector, x_ = x, slope_overide_ = matrix(1)),
+               "3" = simulate_mam(model_ = model, e_ = E, pars_ = pars, s0_ = svector, x_ = x, slope_overide_ = matrix(1)),
+               "4" = simulate_powermam(model_ = model, e_ = E, pars_ = pars, s0_ = svector, x_ = x, slope_overide_ = matrix(1)))
   Y <- out$Simulated[,-1]
   Level <- out$Level[,-1]
   Slope <- out$Slope[,-1]
@@ -317,8 +318,8 @@ ets_sample <- function(model = "AAA", power = FALSE, damped = FALSE, h = 100, fr
     warning("\nparameters violate stability conditions: ")
     print(check_table)
   }
-  
-  model <- c(include_trend, include_seasonal, h, frequency, normalized_seasonality, 1)
+  custom_flag <- 0
+  model <- c(include_trend, include_seasonal, h, frequency, normalized_seasonality, 1, custom_flag)
   if (type == 1) {
     if (is.null(innov)) {
       E <- matrix(rnorm(h * 1, 0, sigma), ncol = h, nrow = 1)
@@ -389,10 +390,10 @@ ets_sample <- function(model = "AAA", power = FALSE, damped = FALSE, h = 100, fr
     pars[6] <- phi
   }
   out <- switch(type,
-                "1" = simulate_aaa(model_ = model, e_ = E, pars_ = pars, s0_ = s_vector, x_ = x),
-                "2" = simulate_mmm(model_ = model, e_ = E, pars_ = pars, s0_ = s_vector, x_ = x),
-                "3" = simulate_mam(model_ = model, e_ = E, pars_ = pars, s0_ = s_vector, x_ = x),
-                "4" = simulate_powermam(model_ = model, e_ = E, pars_ = pars, s0_ = s_vector, x_ = x))
+                "1" = simulate_aaa(model_ = model, e_ = E, pars_ = pars, s0_ = s_vector, x_ = x, slope_overide_ = matrix(1)),
+                "2" = simulate_mmm(model_ = model, e_ = E, pars_ = pars, s0_ = s_vector, x_ = x, slope_overide_ = matrix(1)),
+                "3" = simulate_mam(model_ = model, e_ = E, pars_ = pars, s0_ = s_vector, x_ = x, slope_overide_ = matrix(1)),
+                "4" = simulate_powermam(model_ = model, e_ = E, pars_ = pars, s0_ = s_vector, x_ = x, slope_overide_ = matrix(1)))
   Y <- out$Simulated[,-1]
   Level <- out$Level[,-1]
   Slope <- out$Slope[,-1]

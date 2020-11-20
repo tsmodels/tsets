@@ -1,7 +1,18 @@
-predict.tsets.estimate <- function(object, h = 12, newxreg = NULL, nsim = 1000, drop_na = TRUE, drop_negative = FALSE, redraw = TRUE, forc_dates = NULL, innov = NULL, ...)
+predict.tsets.estimate <- function(object, h = 12, newxreg = NULL, nsim = 1000, drop_na = TRUE, drop_negative = FALSE, redraw = TRUE, forc_dates = NULL, 
+                                   innov = NULL, custom_slope = NULL, ...)
 {
   if (!is.null(forc_dates)) {
     if (h != length(forc_dates)) stop("\nforc_dates must have length equal to h")
+  }
+  if (!is.null(custom_slope)) {
+    if (substr(object$model$setup$model,2,2) == "N") {
+        custom_slope <- NULL
+        warnings("\ncustom_slope passed to a model without a slope component")
+    }
+    if (substr(object$model$setup$model,1,2) == "MA") {
+      custom_slope <- NULL
+      stop("\ncustom_slope passed to an MA type model. Only MM or AA type admit custom_slope.")
+    }
   }
   if (object$spec$xreg$include_xreg == 0) {
     newxreg <- NULL
@@ -34,7 +45,7 @@ predict.tsets.estimate <- function(object, h = 12, newxreg = NULL, nsim = 1000, 
     innov <- matrix(innov, h, nsim)
   }
   # run simulation
-  zList <- forecast_simulation(object = object, newxreg = newxreg, h = h, nsim = nsim, forc_dates = forc_dates, innov = innov, ...)
+  zList <- forecast_simulation(object = object, newxreg = newxreg, h = h, nsim = nsim, forc_dates = forc_dates, innov = innov, custom_slope = custom_slope, ...)
   # check for bad values in the forecast distribution and resimulate (if necessary)
   if (is.null(innov)) {
     fcast_dist <- forecast_sanitycheck(zList$distribution, h, nsim, drop_na, drop_negative)
@@ -58,14 +69,19 @@ predict.tsets.estimate <- function(object, h = 12, newxreg = NULL, nsim = 1000, 
 }
 
 
-forecast_aaa_cpp <- function(object, newxreg = NULL, h = 12, nsim = 1000, forc_dates = NULL, innov = NULL, ...)
+forecast_aaa_cpp <- function(object, newxreg = NULL, h = 12, nsim = 1000, forc_dates = NULL, innov = NULL, custom_slope = NULL, ...)
 {
   if (is.null(forc_dates)) {
     forc_dates <- future_dates(tail(object$spec$target$index,1), frequency = object$spec$target$sampling, n = h)
   }
   coefficient <- object$model$setup$parmatrix[,1]
   frequency <- object$spec$seasonal$frequency
-  model <- c(object$model$setup$include_trend, object$model$setup$include_seasonal, h, frequency, object$model$setup$normalized_seasonality, nsim)
+  if (!is.null(custom_slope) & object$model$setup$include_trend == 1) {
+    custom_flag <- 1
+  } else {
+    custom_flag <- 0
+  }
+  model <- c(object$model$setup$include_trend, object$model$setup$include_seasonal, h, frequency, object$model$setup$normalized_seasonality, nsim, custom_flag)
 
   # last state
   stateinit <- tail(object$model$states, 1)
@@ -107,7 +123,18 @@ forecast_aaa_cpp <- function(object, newxreg = NULL, h = 12, nsim = 1000, forc_d
   } else {
     E <- matrix( rnorm(nsim*(h + 1), 0, coefficient["sigma"]), nsim, h + 1 )
   }
-  out <- simulate_aaa(model_ = model, e_ = E, pars_ = pars, s0_ = s0, x_ = xregf)
+  if (!is.null(custom_slope) & model[1] == 1) {
+      if (length(custom_slope) == h) {
+        B = matrix(c(pars[2], custom_slope), ncol = h + 1, nrow = nsim, byrow = TRUE)
+      } else if (length(custom_slope) == 1) {
+        B = matrix(c(pars[2], rep(custom_slope, h)), ncol = h + 1, nrow = nsim, byrow = TRUE)
+      } else {
+        stop("\ncustom_slope: provide a vector of length equal to either h or 1")
+      }
+  } else {
+    B <- matrix(0, ncol = h + 1, nrow = nsim)
+  }
+  out <- simulate_aaa(model_ = model, e_ = E, pars_ = pars, s0_ = s0, x_ = xregf, slope_overide_ = B)
 
   Y <- out$Simulated[,-1,drop = FALSE]
   Level <- out$Level[,-1,drop = FALSE]
@@ -121,14 +148,20 @@ forecast_aaa_cpp <- function(object, newxreg = NULL, h = 12, nsim = 1000, forc_d
   return(zList)
 }
 
-forecast_mmm_cpp <- function(object, newxreg = NULL, h = 12, nsim = 1000, forc_dates = NULL, innov = NULL, ...)
+forecast_mmm_cpp <- function(object, newxreg = NULL, h = 12, nsim = 1000, forc_dates = NULL, innov = NULL, custom_slope = NULL, ...)
 {
   if (is.null(forc_dates)) {
     forc_dates <- future_dates(tail(object$spec$target$index,1),frequency = object$spec$target$frequency, n = h)
   }
   coefficient <- object$model$setup$parmatrix[,1]
   frequency <- object$spec$seasonal$frequency
-  model <- c(object$model$setup$include_trend, object$model$setup$include_seasonal, h, frequency, object$model$setup$normalized_seasonality, nsim)
+  frequency <- object$spec$seasonal$frequency
+  if (!is.null(custom_slope) & object$model$setup$include_trend == 1) {
+    custom_flag <- 1
+  } else {
+    custom_flag <- 0
+  }
+  model <- c(object$model$setup$include_trend, object$model$setup$include_seasonal, h, frequency, object$model$setup$normalized_seasonality, nsim, custom_flag)
   # last state
   stateinit <- tail(object$model$states,1)
   pars <- rep(0, 6)
@@ -170,8 +203,19 @@ forecast_mmm_cpp <- function(object, newxreg = NULL, h = 12, nsim = 1000, forc_d
   } else {
     E <- matrix(tsaux:::rtruncnorm(nsim*(h + 1), mu = 0, sigma = coefficient["sigma"], lb = -1), nsim, h + 1)
   }
+  if (!is.null(custom_slope) & model[1] == 1) {
+    if (length(custom_slope) == h) {
+      B = matrix(c(pars[2], custom_slope), ncol = h + 1, nrow = nsim, byrow = TRUE)
+    } else if (length(custom_slope) == 1) {
+      B = matrix(c(pars[2], rep(custom_slope, h)), ncol = h + 1, nrow = nsim, byrow = TRUE)
+    } else {
+      stop("\ncustom_slope: provide a vector of length equal to either h or 1")
+    }
+  } else {
+    B <- matrix(0, ncol = h + 1, nrow = nsim)
+  }
+  out <- simulate_mmm(model_ = model, e_ = E, pars_ = pars, s0_ = s0, x_ = xregf, slope_overide_ = B)
   #
-  out <- simulate_mmm(model_ = model, e_ = E, pars_ = pars, s0_ = s0, x_ = xregf)
   #
   Y <- out$Simulated[,-1,drop = FALSE]
   Level <- out$Level[,-1,drop = FALSE]
@@ -186,14 +230,19 @@ forecast_mmm_cpp <- function(object, newxreg = NULL, h = 12, nsim = 1000, forc_d
 }
 
 
-forecast_mam_cpp <- function(object, newxreg=NULL, h = 12, nsim = 1000, forc_dates = NULL, innov = NULL, ...)
+forecast_mam_cpp <- function(object, newxreg=NULL, h = 12, nsim = 1000, forc_dates = NULL, innov = NULL, custom_slope = NULL, ...)
 {
   if (is.null(forc_dates)) {
     forc_dates <- future_dates(tail(object$spec$target$index,1), frequency = object$spec$target$frequency, n = h)
   }
   coefficient <- object$model$setup$parmatrix[,1]
   frequency <- object$spec$seasonal$frequency
-  model <- c(object$model$setup$include_trend, object$model$setup$include_seasonal, h, frequency, object$model$setup$normalized_seasonality, nsim)
+  if (!is.null(custom_slope) & object$model$setup$include_trend == 1) {
+    custom_flag <- 1
+  } else {
+    custom_flag <- 0
+  }
+  model <- c(object$model$setup$include_trend, object$model$setup$include_seasonal, h, frequency, object$model$setup$normalized_seasonality, nsim, custom_flag)
 
   # last state
   stateinit <- tail(object$model$states,1)
@@ -235,7 +284,18 @@ forecast_mam_cpp <- function(object, newxreg=NULL, h = 12, nsim = 1000, forc_dat
   } else {
     E <- matrix(tsaux:::rtruncnorm(nsim*(h + 1), mu = 0, sigma = coefficient["sigma"], lb = -1), nsim, h + 1)
   }
-  out <- simulate_mam(model_ = model, e_ = E, pars_ = pars, s0_ = s0, x_ = xregf)
+  if (!is.null(custom_slope) & model[1] == 1) {
+    if (length(custom_slope) == h) {
+      B = matrix(c(pars[2], custom_slope), ncol = h + 1, nrow = nsim, byrow = TRUE)
+    } else if (length(custom_slope) == 1) {
+      B = matrix(c(pars[2], rep(custom_slope, h)), ncol = h + 1, nrow = nsim, byrow = TRUE)
+    } else {
+      stop("\ncustom_slope: provide a vector of length equal to either h or 1")
+    }
+  } else {
+    B <- matrix(0, ncol = h + 1, nrow = nsim)
+  }
+  out <- simulate_mam(model_ = model, e_ = E, pars_ = pars, s0_ = s0, x_ = xregf, slope_overide_ = B)
   Y <- out$Simulated[,-1,drop = FALSE]
   Level <- out$Level[,-1,drop = FALSE]
   Slope <- out$Slope[,-1,drop = FALSE]
@@ -249,14 +309,20 @@ forecast_mam_cpp <- function(object, newxreg=NULL, h = 12, nsim = 1000, forc_dat
   return(zList)
 }
 
-forecast_powermam_cpp <- function(object, newxreg = NULL, h = 12, nsim = 1000, forc_dates = NULL, innov = NULL, ...)
+forecast_powermam_cpp <- function(object, newxreg = NULL, h = 12, nsim = 1000, forc_dates = NULL, innov = NULL, custom_slope = NULL, ...)
 {
   if (is.null(forc_dates)) {
     forc_dates <- future_dates(tail(object$spec$target$index,1), frequency = object$spec$target$frequency, n = h)
   }
   coefficient <- object$model$setup$parmatrix[,1]
   frequency <- object$spec$seasonal$frequency
-  model <- c(object$model$setup$include_trend, object$model$setup$include_seasonal, h, frequency, object$model$setup$normalized_seasonality, nsim)
+  if (!is.null(custom_slope) & object$model$setup$include_trend == 1) {
+    custom_flag <- 1
+  } else {
+    custom_flag <- 0
+  }
+  
+  model <- c(object$model$setup$include_trend, object$model$setup$include_seasonal, h, frequency, object$model$setup$normalized_seasonality, nsim, custom_flag)
 
   # last state
   stateinit <- tail(object$model$states,1)
@@ -269,6 +335,7 @@ forecast_powermam_cpp <- function(object, newxreg = NULL, h = 12, nsim = 1000, f
   pars[6] <- coefficient["phi"]
   pars[7] <- coefficient["theta"]
   pars[8] <- coefficient["delta"]
+
   pars <- unname(as.numeric(pars))
 
   if (model[2] == 1) {
@@ -300,8 +367,19 @@ forecast_powermam_cpp <- function(object, newxreg = NULL, h = 12, nsim = 1000, f
   } else {
     E <- matrix(tsaux:::rtruncnorm(nsim*(h + 1), mu = 0, sigma = coefficient["sigma"], lb = -1), nsim, h + 1)
   }
+  if (!is.null(custom_slope) & model[1] == 1) {
+    if (length(custom_slope) == h) {
+      B = matrix(c(pars[2], custom_slope), ncol = h + 1, nrow = nsim, byrow = TRUE)
+    } else if (length(custom_slope) == 1) {
+      B = matrix(c(pars[2], rep(custom_slope, h)), ncol = h + 1, nrow = nsim, byrow = TRUE)
+    } else {
+      stop("\ncustom_slope: provide a vector of length equal to either h or 1")
+    }
+  } else {
+    B <- matrix(0, ncol = h + 1, nrow = nsim)
+  }
   #
-  out <- simulate_powermam(model_ = model, e_ = E, pars_ = pars, s0_ = s0, x_ = xregf)
+  out <- simulate_powermam(model_ = model, e_ = E, pars_ = pars, s0_ = s0, x_ = xregf, slope_overide_ = B)
   #
   Y <- out$Simulated[,-1,drop = FALSE]
   Level <- out$Level[,-1,drop = FALSE]
@@ -354,16 +432,16 @@ wrap_forecast_output <- function(object, Y, Level, Slope, Seasonal, E, xregf, mo
 }
 
 
-forecast_simulation <- function(object, newxreg, h, nsim, forc_dates, innov = NULL, ...)
+forecast_simulation <- function(object, newxreg, h, nsim, forc_dates, innov = NULL, custom_slope = NULL, ...)
 {
   switch(object$spec$model$type,
-         "1" = forecast_aaa_cpp(object = object, newxreg = newxreg, h = h, nsim = nsim, forc_dates = forc_dates, innov, ...),
-         "2" = forecast_mmm_cpp(object = object, newxreg = newxreg, h = h, nsim = nsim, forc_dates = forc_dates, innov, ...),
-         "3" = forecast_mam_cpp(object = object, newxreg = newxreg, h = h, nsim = nsim, forc_dates = forc_dates, innov, ...),
-         "4" = forecast_powermam_cpp(object = object, newxreg = newxreg, h = h, nsim = nsim, forc_dates = forc_dates, innov, ...))
+         "1" = forecast_aaa_cpp(object = object, newxreg = newxreg, h = h, nsim = nsim, forc_dates = forc_dates, innov, custom_slope = custom_slope, ...),
+         "2" = forecast_mmm_cpp(object = object, newxreg = newxreg, h = h, nsim = nsim, forc_dates = forc_dates, innov, custom_slope = custom_slope, ...),
+         "3" = forecast_mam_cpp(object = object, newxreg = newxreg, h = h, nsim = nsim, forc_dates = forc_dates, innov, custom_slope = custom_slope, ...),
+         "4" = forecast_powermam_cpp(object = object, newxreg = newxreg, h = h, nsim = nsim, forc_dates = forc_dates, innov, custom_slope = custom_slope, ...))
 }
 
-forecast_simulation_redraw <- function(object, fcast_dist, newxreg, h, nsim, drop_na, drop_negative, forc_dates, innov = NULL, ...)
+forecast_simulation_redraw <- function(object, fcast_dist, newxreg, h, nsim, drop_na, drop_negative, forc_dates, innov = NULL, custom_slope = NULL, ...)
 {
   nsim_act <- nrow(fcast_dist)
   resim_iter <- 0
@@ -375,7 +453,7 @@ forecast_simulation_redraw <- function(object, fcast_dist, newxreg, h, nsim, dro
     resim_ratio <- nsim / max(nsim_act,1)
     n_resim <- ceiling(resim_ratio * (nsim - nsim_act + 100))
 
-    new_fcast_dist <- forecast_simulation(object = object, newxreg = newxreg, h = h, nsim = n_resim, forc_dates = forc_dates, innov = innov, ...)$distribution
+    new_fcast_dist <- forecast_simulation(object = object, newxreg = newxreg, h = h, nsim = n_resim, forc_dates = forc_dates, innov = innov, custom_slope = custom_slope, ...)$distribution
     new_fcast_dist <- forecast_sanitycheck(new_fcast_dist, h, nsim, drop_na, drop_negative, verbose = FALSE)
     fcast_dist <- rbind(fcast_dist,new_fcast_dist)
     nsim_act <- nrow(fcast_dist)

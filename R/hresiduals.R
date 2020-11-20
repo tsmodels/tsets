@@ -52,7 +52,8 @@ hresiduals_aaa_cpp <- function(object, h = 12, nsim = 1000, start = 1, seed = NU
     if ((start + h) > N) {
         h <- N - start
     }
-    model <- c(object$model$setup$include_trend, object$model$setup$include_seasonal, h, frequency, object$model$setup$normalized_seasonality, nsim)
+    custom_flag <- 0
+    model <- c(object$model$setup$include_trend, object$model$setup$include_seasonal, h, frequency, object$model$setup$normalized_seasonality, nsim, custom_flag)
     if (raw) {
         actual <- object$spec$target$y[(start):(start + h - 1)]
     } else {
@@ -84,7 +85,7 @@ hresiduals_aaa_cpp <- function(object, h = 12, nsim = 1000, start = 1, seed = NU
     }
     xreg <- c(0, as.numeric(xreg))
     E <- matrix( rnorm(nsim*(h + 1), 0, coefficient["sigma"]), nsim, h + 1 )
-    out <- simulate_aaa(model_ = model, e_ = E, pars_ = pars, s0_ = s0, x_ = xreg)
+    out <- simulate_aaa(model_ = model, e_ = E, pars_ = pars, s0_ = s0, x_ = xreg, slope_overide_ = matrix(1))
     Y <- out$Simulated[,-1,drop = FALSE]
     if (!raw) {
         if (!is.null(object$spec$transform)) {
@@ -117,7 +118,8 @@ hresiduals_mmm_cpp <- function(object, h = 12, nsim = 1000, start = 1, seed = NU
     if ((start + h) > N) {
         h <- N - start
     }
-    model <- c(object$model$setup$include_trend, object$model$setup$include_seasonal, h, frequency, object$model$setup$normalized_seasonality, nsim)
+    custom_flag <- 0
+    model <- c(object$model$setup$include_trend, object$model$setup$include_seasonal, h, frequency, object$model$setup$normalized_seasonality, nsim, custom_flag)
     actual <- object$spec$target$y[(start):(start + h - 1)]
     # states start one period before (because of initialization seed)
     stateinit <- object$model$states[start,,drop = FALSE]
@@ -145,7 +147,7 @@ hresiduals_mmm_cpp <- function(object, h = 12, nsim = 1000, start = 1, seed = NU
     }
     xreg <- c(0, as.numeric(xreg))
     E <- matrix(tsaux:::rtruncnorm(nsim*(h + 1), mu = 0, sigma = coefficient["sigma"], lb = -1), nsim, h + 1)
-    out <- simulate_mmm(model_ = model, e_ = E, pars_ = pars, s0_ = s0, x_ = xreg)
+    out <- simulate_mmm(model_ = model, e_ = E, pars_ = pars, s0_ = s0, x_ = xreg, slope_overide_ = matrix(1))
     Y <- out$Simulated[,-1,drop = FALSE]
     mu <- colMeans(Y)
     if (raw) {
@@ -175,7 +177,8 @@ hresiduals_mam_cpp <- function(object, h = 12, nsim = 1000, start = 1, seed = NU
     if ((start + h) > N) {
         h <- N - start
     }
-    model <- c(object$model$setup$include_trend, object$model$setup$include_seasonal, h, frequency, object$model$setup$normalized_seasonality, nsim)
+    custom_flag <- 0
+    model <- c(object$model$setup$include_trend, object$model$setup$include_seasonal, h, frequency, object$model$setup$normalized_seasonality, nsim, custom_flag)
     actual <- object$spec$target$y[(start):(start + h - 1)]
     # states start one period before (because of initialization seed)
     stateinit <- object$model$states[start,,drop = FALSE]
@@ -203,7 +206,7 @@ hresiduals_mam_cpp <- function(object, h = 12, nsim = 1000, start = 1, seed = NU
     }
     xreg <- c(0, as.numeric(xreg))
     E <- matrix(tsaux:::rtruncnorm(nsim*(h + 1), mu = 0, sigma = coefficient["sigma"], lb = -1), nsim, h + 1)
-    out <- simulate_mam(model_ = model, e_ = E, pars_ = pars, s0_ = s0, x_ = xreg)
+    out <- simulate_mam(model_ = model, e_ = E, pars_ = pars, s0_ = s0, x_ = xreg, slope_overide_ = matrix(1))
     Y <- out$Simulated[,-1,drop = FALSE]
     mu <- colMeans(Y)
     if (raw) {
@@ -234,7 +237,8 @@ hresiduals_powermam_cpp <- function(object, h = 12, nsim = 1000, start = 1, seed
     if ((start + h) > N) {
         h <- N - start
     }
-    model <- c(object$model$setup$include_trend, object$model$setup$include_seasonal, h, frequency, object$model$setup$normalized_seasonality, nsim)
+    custom_flag <- 0
+    model <- c(object$model$setup$include_trend, object$model$setup$include_seasonal, h, frequency, object$model$setup$normalized_seasonality, nsim, custom_flag)
     actual <- object$spec$target$y[(start):(start + h - 1)]
     # states start one period before (because of initialization seed)
     stateinit <- object$model$states[start,,drop = FALSE]
@@ -264,7 +268,7 @@ hresiduals_powermam_cpp <- function(object, h = 12, nsim = 1000, start = 1, seed
     }
     xreg <- c(0, as.numeric(xreg))
     E <- matrix(tsaux:::rtruncnorm(nsim*(h + 1), mu = 0, sigma = coefficient["sigma"], lb = -1), nsim, h + 1)
-    out <- simulate_powermam(model_ = model, e_ = E, pars_ = pars, s0_ = s0, x_ = xreg)
+    out <- simulate_powermam(model_ = model, e_ = E, pars_ = pars, s0_ = s0, x_ = xreg, slope_overide_ = matrix(1))
     Y <- out$Simulated[,-1,drop = FALSE]
     mu <- colMeans(Y)
     if (raw) {

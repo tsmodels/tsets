@@ -67,8 +67,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // simulate_aaa
-Rcpp::List simulate_aaa(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_);
-RcppExport SEXP _tsets_simulate_aaa(SEXP model_SEXP, SEXP e_SEXP, SEXP pars_SEXP, SEXP s0_SEXP, SEXP x_SEXP) {
+Rcpp::List simulate_aaa(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_, arma::mat slope_overide_);
+RcppExport SEXP _tsets_simulate_aaa(SEXP model_SEXP, SEXP e_SEXP, SEXP pars_SEXP, SEXP s0_SEXP, SEXP x_SEXP, SEXP slope_overide_SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -77,13 +77,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type pars_(pars_SEXP);
     Rcpp::traits::input_parameter< SEXP >::type s0_(s0_SEXP);
     Rcpp::traits::input_parameter< SEXP >::type x_(x_SEXP);
-    rcpp_result_gen = Rcpp::wrap(simulate_aaa(model_, e_, pars_, s0_, x_));
+    Rcpp::traits::input_parameter< arma::mat >::type slope_overide_(slope_overide_SEXP);
+    rcpp_result_gen = Rcpp::wrap(simulate_aaa(model_, e_, pars_, s0_, x_, slope_overide_));
     return rcpp_result_gen;
 END_RCPP
 }
 // simulate_mmm
-Rcpp::List simulate_mmm(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_);
-RcppExport SEXP _tsets_simulate_mmm(SEXP model_SEXP, SEXP e_SEXP, SEXP pars_SEXP, SEXP s0_SEXP, SEXP x_SEXP) {
+Rcpp::List simulate_mmm(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_, arma::mat slope_overide_);
+RcppExport SEXP _tsets_simulate_mmm(SEXP model_SEXP, SEXP e_SEXP, SEXP pars_SEXP, SEXP s0_SEXP, SEXP x_SEXP, SEXP slope_overide_SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -92,13 +93,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type pars_(pars_SEXP);
     Rcpp::traits::input_parameter< SEXP >::type s0_(s0_SEXP);
     Rcpp::traits::input_parameter< SEXP >::type x_(x_SEXP);
-    rcpp_result_gen = Rcpp::wrap(simulate_mmm(model_, e_, pars_, s0_, x_));
+    Rcpp::traits::input_parameter< arma::mat >::type slope_overide_(slope_overide_SEXP);
+    rcpp_result_gen = Rcpp::wrap(simulate_mmm(model_, e_, pars_, s0_, x_, slope_overide_));
     return rcpp_result_gen;
 END_RCPP
 }
 // simulate_mam
-Rcpp::List simulate_mam(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_);
-RcppExport SEXP _tsets_simulate_mam(SEXP model_SEXP, SEXP e_SEXP, SEXP pars_SEXP, SEXP s0_SEXP, SEXP x_SEXP) {
+Rcpp::List simulate_mam(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_, arma::mat slope_overide_);
+RcppExport SEXP _tsets_simulate_mam(SEXP model_SEXP, SEXP e_SEXP, SEXP pars_SEXP, SEXP s0_SEXP, SEXP x_SEXP, SEXP slope_overide_SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -107,13 +109,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type pars_(pars_SEXP);
     Rcpp::traits::input_parameter< SEXP >::type s0_(s0_SEXP);
     Rcpp::traits::input_parameter< SEXP >::type x_(x_SEXP);
-    rcpp_result_gen = Rcpp::wrap(simulate_mam(model_, e_, pars_, s0_, x_));
+    Rcpp::traits::input_parameter< arma::mat >::type slope_overide_(slope_overide_SEXP);
+    rcpp_result_gen = Rcpp::wrap(simulate_mam(model_, e_, pars_, s0_, x_, slope_overide_));
     return rcpp_result_gen;
 END_RCPP
 }
 // simulate_powermam
-Rcpp::List simulate_powermam(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_);
-RcppExport SEXP _tsets_simulate_powermam(SEXP model_SEXP, SEXP e_SEXP, SEXP pars_SEXP, SEXP s0_SEXP, SEXP x_SEXP) {
+Rcpp::List simulate_powermam(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_, arma::mat slope_overide_);
+RcppExport SEXP _tsets_simulate_powermam(SEXP model_SEXP, SEXP e_SEXP, SEXP pars_SEXP, SEXP s0_SEXP, SEXP x_SEXP, SEXP slope_overide_SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -122,7 +125,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type pars_(pars_SEXP);
     Rcpp::traits::input_parameter< SEXP >::type s0_(s0_SEXP);
     Rcpp::traits::input_parameter< SEXP >::type x_(x_SEXP);
-    rcpp_result_gen = Rcpp::wrap(simulate_powermam(model_, e_, pars_, s0_, x_));
+    Rcpp::traits::input_parameter< arma::mat >::type slope_overide_(slope_overide_SEXP);
+    rcpp_result_gen = Rcpp::wrap(simulate_powermam(model_, e_, pars_, s0_, x_, slope_overide_));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -132,10 +136,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tsets_filter_mmm", (DL_FUNC) &_tsets_filter_mmm, 5},
     {"_tsets_filter_mam", (DL_FUNC) &_tsets_filter_mam, 5},
     {"_tsets_filter_powermam", (DL_FUNC) &_tsets_filter_powermam, 5},
-    {"_tsets_simulate_aaa", (DL_FUNC) &_tsets_simulate_aaa, 5},
-    {"_tsets_simulate_mmm", (DL_FUNC) &_tsets_simulate_mmm, 5},
-    {"_tsets_simulate_mam", (DL_FUNC) &_tsets_simulate_mam, 5},
-    {"_tsets_simulate_powermam", (DL_FUNC) &_tsets_simulate_powermam, 5},
+    {"_tsets_simulate_aaa", (DL_FUNC) &_tsets_simulate_aaa, 6},
+    {"_tsets_simulate_mmm", (DL_FUNC) &_tsets_simulate_mmm, 6},
+    {"_tsets_simulate_mam", (DL_FUNC) &_tsets_simulate_mam, 6},
+    {"_tsets_simulate_powermam", (DL_FUNC) &_tsets_simulate_powermam, 6},
     {NULL, NULL, 0}
 };
 

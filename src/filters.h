@@ -13,10 +13,10 @@ Rcpp::List filter_aaa(SEXP, SEXP, SEXP, SEXP, SEXP);
 Rcpp::List filter_mmm(SEXP, SEXP, SEXP, SEXP, SEXP);
 Rcpp::List filter_mam(SEXP, SEXP, SEXP, SEXP, SEXP);
 Rcpp::List filter_powermam(SEXP, SEXP, SEXP, SEXP, SEXP);
-Rcpp::List simulate_aaa(SEXP , SEXP , SEXP , SEXP , SEXP);
-Rcpp::List simulate_mmm(SEXP , SEXP , SEXP , SEXP , SEXP);
-Rcpp::List simulate_mam(SEXP , SEXP , SEXP , SEXP , SEXP );
-Rcpp::List simulate_powermam(SEXP , SEXP , SEXP , SEXP , SEXP);
+Rcpp::List simulate_aaa(SEXP , SEXP , SEXP , SEXP , SEXP, arma::mat);
+Rcpp::List simulate_mmm(SEXP , SEXP , SEXP , SEXP , SEXP, arma::mat);
+Rcpp::List simulate_mam(SEXP , SEXP , SEXP , SEXP , SEXP , arma::mat);
+Rcpp::List simulate_powermam(SEXP , SEXP , SEXP , SEXP , SEXP, arma::mat);
 
 
 inline void update_seasonal_mat_additive(arma::mat& S_mat, const double update_val, const int row_ind, const double a)
@@ -102,25 +102,24 @@ inline void update_seasonal_mat_multiplicative(arma::mat& S_mat, const double up
     const int m = model[3];                             /* seasonal periodicity      */                 \
     const int normseason = model[4];                                                                    \
     const int n_sim = model[5];                                                                         \
+    const int custom_slope = model[6];                                                                  \
                                                                                                         \
     arma::mat Y = arma::zeros(n_sim, n + 1);                                                            \
     arma::mat L = arma::zeros(n_sim, n + 1);                                                            \
-    arma::mat B(n_sim, n + 1);                                                                          \
     arma::cube S(n + 1, m, n_sim);                                                                      \
                                                                                                         \
     arma::vec X(x.begin(),x.size(),false,true);         /* external data (X'rho) */                     \
     arma::mat E(e.begin(),e.nrow(),e.ncol(),false,true);                                                \
                                                                                                         \
     arma::rowvec sinit = as<arma::rowvec>(s0);          /* initial m - 1 seasonal parameters */         \
-                                                                                                        \
-    if (mult_trend) {                                                                                   \
-        B.fill(1);                                                                                      \
+    arma::mat B(n_sim, n + 1);                                                                          \
+    if (custom_slope == 1) {                                                                            \
+        B = slope_overide_;                                                                             \
     } else {                                                                                            \
-        B.fill(0);                                                                                      \
+        if(mult_trend) {B.fill(1);} else {B.fill(0);}                                                   \
+        B.col(0).fill(pars[1]);                                                                         \
     }                                                                                                   \
-                                                                                                        \
     L.col(0).fill(pars[0]);                                                                             \
-    B.col(0).fill(pars[1]);                                                                             \
                                                                                                         \
     const double alpha = pars[2];                                                                       \
     const double beta  = pars[3];                                                                       \

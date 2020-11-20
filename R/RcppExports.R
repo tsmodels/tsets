@@ -17,19 +17,19 @@ filter_powermam <- function(model_, y_, pars_, s0_, x_) {
     .Call(`_tsets_filter_powermam`, model_, y_, pars_, s0_, x_)
 }
 
-simulate_aaa <- function(model_, e_, pars_, s0_, x_) {
-    .Call(`_tsets_simulate_aaa`, model_, e_, pars_, s0_, x_)
+simulate_aaa <- function(model_, e_, pars_, s0_, x_, slope_overide_) {
+    .Call(`_tsets_simulate_aaa`, model_, e_, pars_, s0_, x_, slope_overide_)
 }
 
-simulate_mmm <- function(model_, e_, pars_, s0_, x_) {
-    .Call(`_tsets_simulate_mmm`, model_, e_, pars_, s0_, x_)
+simulate_mmm <- function(model_, e_, pars_, s0_, x_, slope_overide_) {
+    .Call(`_tsets_simulate_mmm`, model_, e_, pars_, s0_, x_, slope_overide_)
 }
 
-simulate_mam <- function(model_, e_, pars_, s0_, x_) {
-    .Call(`_tsets_simulate_mam`, model_, e_, pars_, s0_, x_)
+simulate_mam <- function(model_, e_, pars_, s0_, x_, slope_overide_) {
+    .Call(`_tsets_simulate_mam`, model_, e_, pars_, s0_, x_, slope_overide_)
 }
 
-simulate_powermam <- function(model_, e_, pars_, s0_, x_) {
-    .Call(`_tsets_simulate_powermam`, model_, e_, pars_, s0_, x_)
+simulate_powermam <- function(model_, e_, pars_, s0_, x_, slope_overide_) {
+    .Call(`_tsets_simulate_powermam`, model_, e_, pars_, s0_, x_, slope_overide_)
 }
 

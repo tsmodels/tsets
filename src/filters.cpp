@@ -214,18 +214,15 @@ Rcpp::List filter_powermam(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_)
 //
 
 // [[Rcpp::export]]
-Rcpp::List simulate_aaa(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_)
+Rcpp::List simulate_aaa(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_, arma::mat slope_overide_)
 {
     try {
     const bool mult_trend = false;
-
     TSETS_SIM_SETUP
-
     for (int i = 0; i < n_sim; i++)
     {
         arma::mat S_tmp = arma::zeros(n + 1, m);
         S_tmp.row(0) = sinit;       // for simulation we require the full seasonal vector
-
         for (int j = 1; j <= n; j++)
         {
             const double S_m = S_tmp(j - 1, m - 1);
@@ -235,9 +232,10 @@ Rcpp::List simulate_aaa(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_)
             L(i, j) = (mu + a) + alpha * E(i, j);
 
             if (trend==1) {
-                B(i, j) = phi * B(i, j - 1) + beta * E(i, j);
+              if (custom_slope == 0) {
+                B(i, j) = (phi * B(i, j - 1) + beta * E(i, j));
+              }
             }
-
             if (season==1) {
                 const double s_update = (S_m - a) + gamma * E(i, j);
                 update_seasonal_mat_additive(S_tmp, s_update, j, a);
@@ -261,13 +259,13 @@ Rcpp::List simulate_aaa(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_)
 }
 
 // [[Rcpp::export]]
-Rcpp::List simulate_mmm(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_)
+Rcpp::List simulate_mmm(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_, arma::mat slope_overide_)
 {
     try {
     const bool mult_trend = true;
 
     TSETS_SIM_SETUP
-
+    //Rcout << "The value is " << B << std::endl;
     for (int i=0; i < n_sim; i++)
     {
         arma::mat S_tmp = arma::ones(n+1,m);
@@ -284,9 +282,10 @@ Rcpp::List simulate_mmm(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_)
             L(i,j) = ( mu * (1 + alpha * E(i,j)) ) * a;
 
             if (trend==1) {
+              if (custom_slope == 0) {
                 B(i,j) = std::pow(B(i,j-1), phi) * (1 + beta * E(i,j));
+              }
             }
-
             if (season==1) {
                 const double s_update = ( S_m * (1 + gamma * E(i,j)) ) / a;
                 update_seasonal_mat_multiplicative(S_tmp,s_update,j, a);
@@ -309,8 +308,10 @@ Rcpp::List simulate_mmm(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_)
     return R_NilValue;
 }
 
+
+
 // [[Rcpp::export]]
-Rcpp::List simulate_mam(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_)
+Rcpp::List simulate_mam(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_, arma::mat slope_overide_)
 {
     try {
     const bool mult_trend = false;
@@ -330,11 +331,11 @@ Rcpp::List simulate_mam(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_)
 
             Y(i,j) = ( mu + X(j) ) * S_m * ( 1 + E(i,j) );
             L(i,j) = ( mu * (1 + alpha * E(i,j)) ) * a;
-
             if (trend==1) {
+              if (custom_slope == 0) {
                 B(i,j) = ( phi * B(i,j-1)  + beta * mu * E(i,j) ) * a;
+              }
             }
-
             if (season==1) {
                 const double s_update = ( S_m * (1 + gamma * E(i,j)) ) / a;
                 update_seasonal_mat_multiplicative(S_tmp,s_update,j, a);
@@ -358,14 +359,14 @@ Rcpp::List simulate_mam(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_)
 }
 
 // [[Rcpp::export]]
-Rcpp::List simulate_powermam(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_)
+Rcpp::List simulate_powermam(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_, arma::mat slope_overide_)
 {
     try {
     const bool mult_trend = false;
 
     TSETS_SIM_SETUP
     TSETS_UNUSED_PAR(normseason);
-
+    
     double theta = pars[6];
     double delta = pars[7];
 
@@ -387,11 +388,11 @@ Rcpp::List simulate_powermam(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_
 
             Y(i,j) = mu_pX * S_m + std::pow(mu_pX, theta) * S_pow_delta * E(i,j);
             L(i,j) = mu + alpha * mu_pow_theta * S_pow_delta_m1 * E(i,j);
-
             if (trend==1) {
+              if (custom_slope == 0) {
                 B(i,j) = phi * B(i,j-1) + beta * mu_pow_theta * S_pow_delta_m1 * E(i,j);
+              }
             }
-
             if (season==1) {
                 const double s_update = S_m + gamma * S_pow_delta * std::pow(mu, theta-1) * E(i,j);
                 update_seasonal_mat_additive(S_tmp,s_update,j, 0.0);
