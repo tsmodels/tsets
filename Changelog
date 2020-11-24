@@ -1,3 +1,7 @@
+# 2020-11-23 v0.1.7 [AG]
+- Added custom slope component to predict function to allow user override of slope in forecast.
+- Fix to residuals for case when there is no lambda but raw is set to TRUE
+
 # 2020-09-16 v0.1.6 [AG]
 - Fix to tsbacktest when no alpha (coverage parameter) is provided.
 - Added Changelog to package
