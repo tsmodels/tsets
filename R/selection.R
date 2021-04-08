@@ -34,7 +34,7 @@ auto_ets = function(y, xreg = NULL, lambda = NA, metric = "AIC", frequency = NUL
   } else {
     transform <- NULL
   }
-  if (!additive_only | power_model) {
+  if (!additive_only & power_model) {
     sgrid[which(sgrid$model == "MAM")[2],"power"] <- 1
     sgrid[which(sgrid$model == "MAN")[2],"power"] <- 1
   }
