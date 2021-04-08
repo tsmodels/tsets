@@ -2,7 +2,7 @@
 auto_ets = function(y, xreg = NULL, lambda = NA, metric = "AIC", frequency = NULL,
                    normalized_seasonality = TRUE, additive_only = FALSE, cores = NULL, 
                    solver = "nlminb", control = list(trace = 0, maxit = 1000), 
-                   verbose = FALSE, retain = 1, scale = FALSE, seasonal_init = "fixed", ...)
+                   power_model = FALSE, verbose = FALSE, retain = 1, scale = FALSE, seasonal_init = "fixed", ...)
 {
   # sanity check of model input
   valid_criteria <- c("AIC","BIC","AICc","MAPE","MASE","MSLRE")
@@ -34,7 +34,7 @@ auto_ets = function(y, xreg = NULL, lambda = NA, metric = "AIC", frequency = NUL
   } else {
     transform <- NULL
   }
-  if (!additive_only) {
+  if (!additive_only | !power_model) {
     sgrid[which(sgrid$model == "MAM")[2],"power"] <- 1
     sgrid[which(sgrid$model == "MAN")[2],"power"] <- 1
   }

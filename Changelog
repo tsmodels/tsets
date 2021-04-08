@@ -1,3 +1,7 @@
+# 2021-04-07 v0.1.8 [AG]
+- Added power_model option in auto_ets with default of FALSE (power MAM models 
+should not be included as default as their properties still need more research)
+
 # 2020-11-23 v0.1.7 [AG]
 - Added custom slope component to predict function to allow user override of slope in forecast.
 - Fix to residuals for case when there is no lambda but raw is set to TRUE

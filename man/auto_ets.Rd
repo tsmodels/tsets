@@ -10,7 +10,8 @@ Automatic model selection based on choice of criteria.
 auto_ets(y, xreg = NULL, lambda = NA, metric = "AIC", frequency = NULL, 
 normalized_seasonality = TRUE, additive_only = FALSE, cores = NULL, 
 solver = "nlminb", control = list(trace = 0, maxit = 1000), 
-verbose = FALSE, retain = 1, scale = FALSE, seasonal_init = "fixed", ...)
+power_model = FALSE, verbose = FALSE, retain = 1, scale = FALSE, 
+seasonal_init = "fixed", ...)
 }
 \arguments{
 \item{y}{
