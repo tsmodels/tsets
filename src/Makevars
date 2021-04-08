@@ -1,4 +1,3 @@
-
 # Check for the default Apple compiler
 APPLE_COMPILER := $(shell CXX11='$(CXX)' $(CXX11) --version 2>&1 | grep -i -c -E 'apple llvm')
 

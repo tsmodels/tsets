@@ -52,7 +52,8 @@ tsmetrics.tsets.predict = function(object, actual, alpha = 0.1, ...)
   } else {
     m_mis <- as.numeric(NA)
   }
-  data.frame("h" = n, "MAPE" = m_mape, "MASE" = m_mase, "MSLRE" = m_mslre, "BIAS" = m_bias, "MIS" = m_mis)
+  m_crps <- crps(actual, object$distribution)
+  data.frame("h" = n, "MAPE" = m_mape, "MASE" = m_mase, "MSLRE" = m_mslre, "BIAS" = m_bias, "MIS" = m_mis, "CRPS" = m_crps)
 }
   
 tsmetrics.tsets.estimate = function(object, ...)
