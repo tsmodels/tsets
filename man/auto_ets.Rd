@@ -48,6 +48,9 @@ The solver to use for estimation.
 \item{control}{
 The solver control parameters.
 }
+\item{power_model}{
+Wether to include the power MAM models.
+}
 \item{verbose}{
 Whether to generate verbose output.
 }
