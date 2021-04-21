@@ -4,7 +4,7 @@ using namespace Rcpp;
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::plugins(cpp11)]]
 // [[Rcpp::export]]
-Rcpp::List filter_aaa(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_)
+Rcpp::List filter_aaa(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_, SEXP good_)
 {
     try {
     const bool mult_trend    = false;
@@ -14,14 +14,17 @@ Rcpp::List filter_aaa(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_)
 
     //
     // start time-loop
-
     for (int i=1; i < n; ++i)
     {
         const double S_m = S(i-1,m-1);
         const double mu = L(i-1) + phi * B(i-1);
-
+        
         F(i) = mu + S_m + X(i);
-        E(i) = Y(i) - F(i);
+        if (good_values(i) == 1) {
+          E(i) = Y(i) - F(i);
+        } else {
+          E(i) = 0.0;
+        }
 
         const double a = (normseason == 1 && season == 1) ? (gamma/m)*E(i) : 0.0;
 
@@ -51,7 +54,7 @@ Rcpp::List filter_aaa(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_)
 }
 
 // [[Rcpp::export]]
-Rcpp::List filter_mmm(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_)
+Rcpp::List filter_mmm(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_, SEXP good_)
 {
     try {
     const bool mult_trend    = true;
@@ -68,7 +71,11 @@ Rcpp::List filter_mmm(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_)
         const double mu = L(i-1) * std::pow(B(i-1), phi);
 
         F(i) = mu * S_m + X(i);
-        E(i) = (Y(i) - F(i))/F(i);
+        if (good_values(i) == 1) {
+            E(i) = (Y(i) - F(i))/F(i);
+        } else {
+            E(i) = 0.0;
+        }
 
         const double a = (normseason == 1 && season == 1) ? 1 + (gamma/m)*S_m*E(i) : 1.0;
 
@@ -99,7 +106,7 @@ Rcpp::List filter_mmm(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_)
 }
 
 // [[Rcpp::export]]
-Rcpp::List filter_mam(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_)
+Rcpp::List filter_mam(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_, SEXP good_)
 {
     try {
     const bool mult_trend    = false;
@@ -116,7 +123,11 @@ Rcpp::List filter_mam(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_)
         const double mu = L(i-1) + phi * B(i-1);
 
         F(i) = ( mu + X(i) ) * S_m;
-        E(i) = (Y(i) - F(i))/F(i);
+        if (good_values(i) == 1) {
+            E(i) = (Y(i) - F(i))/F(i);
+        } else {
+            E(i) = 0.0;
+        }
 
         const double a = (normseason == 1 && season == 1) ? 1 + (gamma/m)*S_m*E(i) : 1.0;
 
@@ -147,7 +158,7 @@ Rcpp::List filter_mam(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_)
 }
 
 // [[Rcpp::export]]
-Rcpp::List filter_powermam(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_)
+Rcpp::List filter_powermam(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_, SEXP good_)
 {
     try {
     const bool mult_trend    = false;
@@ -179,8 +190,11 @@ Rcpp::List filter_powermam(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_)
 
         F(i) = mu_pX * S_m;
         F_power(i) = std::pow(mu_pX, theta) * S_pow_delta;
-
-        E(i) = (Y(i) - F(i))/F_power(i);
+        if (good_values(i) == 1) {
+            E(i) = (Y(i) - F(i))/F_power(i);
+        } else {
+            E(i) = 0.0;
+        }
 
         L(i) = mu + alpha * mu_pow_theta * S_pow_delta_m1 * E(i);
 

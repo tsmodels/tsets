@@ -7,17 +7,20 @@ estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace 
   setup <- object$model
   pars <- setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"init"]
   setup$parnames <- names(pars)
-
+  
   setup$data <- as.numeric(object$target$y)
+  setup$good <- rep(1, length(setup$data))
+  setup$good[which(is.na(setup$data))] <- 0
+  setup$good <- c(1,setup$good)
   setup$frequency <- object$seasonal$frequency
   setup$xreg <- object$xreg$xreg
   setup$k <- ncol(object$xreg$xreg)
   setup$ets_env <- ets_env
-
+  
   lfun <- tsets_ll_fun(setup$type)
   ffun <- tsets_filter_fun(setup$type)
   setup$estimation <- 1
-
+  
   # find parameter scaling
   if (any(grepl("rho",names(pars)))) {
     ix <- which(grepl("rho",names(pars)))
@@ -32,13 +35,13 @@ estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace 
   } else {
     parscale <- rep(1, length(pars))
   }
-
+  
   # run solver
   setup$debug <- FALSE
   if (solver == "nlminb") {
     opt_res <- nlminb(start = pars, objective = lfun, lower = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"lower"],
-                     upper = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"upper"], setup = setup, 
-                     scale = 1/parscale, control = control)
+                      upper = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"upper"], setup = setup, 
+                      scale = 1/parscale, control = control)
     pars <- opt_res$par
     lik <- opt_res$objective
     #
@@ -49,8 +52,8 @@ estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace 
       while (cont_) {
         run_count <- run_count + 1
         opt_res <- nlminb(start = pars, objective = lfun, lower = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"lower"],
-                         upper = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"upper"], setup = setup, 
-                         scale = 1/parscale, control = control)
+                          upper = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"upper"], setup = setup, 
+                          scale = 1/parscale, control = control)
         pars <- opt_res$par
         lik <- opt_res$objective
         if (opt_res$convergence == 0 || run_count > 19) {
@@ -63,7 +66,7 @@ estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace 
     if (opt_res$convergence != 0) warnings("\nnlminb indicates non-successful convergence...")
   } else if (solver == "solnp") {
     opt_res <- solnp(pars = pars, fun = lfun, LB = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"lower"],
-                    UB = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"upper"], setup = setup, control = control)
+                     UB = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"upper"], setup = setup, control = control)
     pars <- opt_res$pars
     lik <- opt_res$values[length(opt_res$values)]
     if (opt_res$convergence != 0) warnings("\nsolnp indicates non successful convergence...")
@@ -78,15 +81,15 @@ estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace 
     setup$impose_bounds <- FALSE
     pars_inp <- pars_estim_inv_trans(opt_res$par,mult_trend,mult_seasonality)
     opt_res <- optim(par = pars_inp, fn = lfun, lower = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"lower"],
-                    upper = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"upper"], setup = setup,
-                    method = "L-BFGS-B", control = control, hessian = TRUE)
+                     upper = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"upper"], setup = setup,
+                     method = "L-BFGS-B", control = control, hessian = F)
     pars <- opt_res$par
     lik <- opt_res$value
-    if (opt_res$convergence != 0) warnings("\noptim(lbfgsb3c) indicates non-successful convergence...")
+    if (opt_res$convergence != 0) warnings("\noptim indicates non-successful convergence...")
   } else {
     stop("\nsolver must be either solnp, nlminb or optim")
   }
-
+  
   if (object$target$scaler != 1 & object$model$type == 1) {
     pnames <- names(pars)
     pars["l0"] <- pars["l0"] * object$target$scaler
@@ -108,7 +111,7 @@ estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace 
       x <- rep(0, length(setup$data) + 1)
     }
   }
-
+  
   if (setup$type == 4) {
     filt <- ffun(setup$data, alpha = setup$parmatrix["alpha","init"], beta = setup$parmatrix["beta","init"], 
                  gamma = setup$parmatrix["gamma","init"], phi = setup$parmatrix["phi","init"], 
@@ -123,8 +126,8 @@ estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace 
                  s0 = setup$parmatrix[paste0("s",0:(setup$frequency - 2)),"init"], 
                  frequency = setup$frequency, x = x, setup = setup)
   }
-
-  setup$parmatrix["sigma","init"] <- sd(filt$residuals)
+  
+  setup$parmatrix["sigma","init"] <- sd(filt$residuals[which(setup$good[-1] == 1)])
   filt$setup <- setup
   filt$loglik <- lik
   opt_res$timing <- difftime(Sys.time(), tic, units = "mins")
@@ -132,7 +135,6 @@ estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace 
   class(obj) <- c("tsets.estimate","tsmodel.estimate")
   return(obj)
 }
-
 
 tsets_ll_fun <- function(type)
 {
@@ -199,14 +201,15 @@ tsets_ll_aaa <- function(pars, setup)
   y <- c(0, as.numeric(setup$data))
 
   if (!setup$debug) {
-    f <- filter_aaa(model_ = model, y_ = y, pars_ = pars, s0_ = s0, x_ = x)
+    f <- filter_aaa(model_ = model, y_ = y, pars_ = pars, s0_ = s0, x_ = x, good_ = setup$good)
     if (setup$estimation == 1) {
       if (any(is.na(f$Error))) {
         return(get("ets_llh", ets_env) + 0.1 * (abs(get("ets_llh", ets_env))))
       }
     }
-    n <- length(setup$data)
-    out <- n * log(sum(f$Error[-1]^2))
+    n <- sum(setup$good) - 1
+    Error <- f$Error[which(setup$good == 1)]
+    out <- n * log(sum(Error[-1]^2))
     if (setup$estimation == 1) assign("ets_llh", out, envir = ets_env)
   } else {
     f <- tsets_filter_aaa(setup$data, alpha = alpha, beta = beta, gamma = gamma, phi = phi, l0 = l0, b0 = b0, s0 = s0, frequency = setup$frequency, x = x, setup = setup)
@@ -215,8 +218,9 @@ tsets_ll_aaa <- function(pars, setup)
         return(get("ets_llh", ets_env) + 0.1 * (abs(get("ets_llh", ets_env))))
       }
     }
-    n <- length(setup$data)
-    out <- n * log(sum(f$residuals^2))
+    n <- length(setup$data[which(setup$good == 1)])
+    Error <- f$residuals[which(setup$good == 1)]
+    out <- n * log(sum(Error^2))
     if (setup$estimation == 1) {
       assign("ets_llh", out, envir = ets_env)
     }
@@ -258,14 +262,16 @@ tsets_ll_mmm <- function(pars, setup)
   y <- c(0, as.numeric(setup$data))
 
   if (!setup$debug) {
-    f <- filter_mmm(model_ = model, y_ = y, pars_ = pars, s0_ = s0, x_ = x)
+    f <- filter_mmm(model_ = model, y_ = y, pars_ = pars, s0_ = s0, x_ = x, good_ = setup$good)
     if (setup$estimation == 1) {
       if (any(is.na(f$Error))) {
         return(get("ets_llh", ets_env) + 0.1 * (abs(get("ets_llh", ets_env))))
       }
     }
-    n <- length(setup$data)
-    out <- n * log(sum(f$Error[-1]^2)) + 2 * sum(log(abs(f$Filtered[-1])))
+    n <- length(setup$data[which(setup$good == 1)])
+    Error <- f$Error[which(setup$good == 1)]
+    Filt <- f$Filtered[which(setup$good == 1)]
+    out <- n * log(sum(Error[-1]^2)) + 2 * sum(log(abs(Filt[-1])))
     if (setup$estimation == 1) {
       assign("ets_llh", out, envir = ets_env)
     }
@@ -328,15 +334,16 @@ tsets_ll_mam <- function(pars, setup)
   y <- c(0, as.numeric(setup$data))
   
   if (!setup$debug) {
-    f <- filter_mam(model_ = model, y_ = y, pars_ = pars, s0_ = s0, x_ = x)
+    f <- filter_mam(model_ = model, y_ = y, pars_ = pars, s0_ = s0, x_ = x, good_ = setup$good)
     if (setup$estimation == 1) {
       if (any(is.na(f$Error))) {
         return(get("ets_llh", ets_env) + 0.1 * (abs(get("ets_llh", ets_env))))
       }
     }
-    n <- length(setup$data)
-    out <- n * log(sum(f$Error[-1]^2)) + 2 * sum(log(abs(f$Filtered[-1])))
-
+    n <- length(setup$data[which(setup$good == 1)])
+    Error <- f$Error[which(setup$good == 1)]
+    Filt <- f$Filtered[which(setup$good == 1)]
+    out <- n * log(sum(Error[-1]^2)) + 2 * sum(log(abs(Filt[-1])))
     if (setup$estimation == 1) {
       assign("ets_llh", out, envir = ets_env)
     }
@@ -391,12 +398,14 @@ tsets_ll_powermam <- function(pars, setup)
   model <- c(setup$include_trend, setup$include_seasonal, setup$frequency, NROW(setup$data) + 1, setup$normalized_seasonality)
   y <- c(0, as.numeric(setup$data))
 
-  f <- filter_powermam(model_ = model, y_ = y, pars_ = pars, s0_ = s0, x_ = x)
+  f <- filter_powermam(model_ = model, y_ = y, pars_ = pars, s0_ = s0, x_ = x, good_ = setup$good)
   if (setup$estimation == 1) {
     if (any(is.na(f$Error))) return(get("ets_llh", ets_env) + 0.1 * (abs(get("ets_llh", ets_env))))
   }
-  n <- length(setup$data)
-  out <- n*log(sum(f$Error[-1]^2)) + 2*sum(log(abs(f$Fpower[-1])))
+  n <- length(setup$data[which(setup$good == 1)])
+  Error <- f$Error[which(setup$good == 1)]
+  Filt <- f$Fpower[which(setup$good == 1)]
+  out <- n * log(sum(Error[-1]^2)) + 2 * sum(log(abs(Filt[-1])))
   if (setup$estimation == 1) assign("ets_llh", out, envir = ets_env)
   return(out)
 }

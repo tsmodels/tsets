@@ -7,9 +7,6 @@ ets_modelspec <- function(y, model = "AAN", damped = FALSE, power = FALSE, xreg 
   if  (!is.xts(y)) {
     stop("y must be an xts object")
   }
-  if (any(is.na(y))) {
-    stop("\nNAs found in y...not allowed.")
-  }
   # 2. Validate model choice
   model <- match.arg(model, choices = c("AAA","AAN","ANN","ANA","MMM","MMN","MNM","MNN","MAM","MAN","Theta"), several.ok = FALSE)
 
@@ -40,8 +37,8 @@ ets_modelspec <- function(y, model = "AAN", damped = FALSE, power = FALSE, xreg 
   xreg <- check_xreg(xreg, index(y))
   # 5. Check transformation
   y_orig <- y
-  if (!is.null(lambda)){
-    if(!is.na(lambda) & lambda == 1) lambda <- NULL
+  if (!is.null(lambda)) {
+    if (!is.na(lambda) & lambda == 1) lambda <- NULL
   }
   if (substr(model,1,1) == "M") {
     if (!is.null(lambda)) {

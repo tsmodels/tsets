@@ -9,10 +9,10 @@
 
 // Contributed Macros and code improvements by Keith O'Hara
 
-Rcpp::List filter_aaa(SEXP, SEXP, SEXP, SEXP, SEXP);
-Rcpp::List filter_mmm(SEXP, SEXP, SEXP, SEXP, SEXP);
-Rcpp::List filter_mam(SEXP, SEXP, SEXP, SEXP, SEXP);
-Rcpp::List filter_powermam(SEXP, SEXP, SEXP, SEXP, SEXP);
+Rcpp::List filter_aaa(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+Rcpp::List filter_mmm(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+Rcpp::List filter_mam(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+Rcpp::List filter_powermam(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 Rcpp::List simulate_aaa(SEXP , SEXP , SEXP , SEXP , SEXP, arma::mat);
 Rcpp::List simulate_mmm(SEXP , SEXP , SEXP , SEXP , SEXP, arma::mat);
 Rcpp::List simulate_mam(SEXP , SEXP , SEXP , SEXP , SEXP , arma::mat);
@@ -41,6 +41,7 @@ inline void update_seasonal_mat_multiplicative(arma::mat& S_mat, const double up
     Rcpp::NumericVector s0(s0_);                                                                        \
     Rcpp::NumericVector x(x_);                                                                          \
     Rcpp::IntegerVector model(model_);                                                                  \
+    Rcpp::NumericVector good(good_);                                                                    \
                                                                                                         \
     const int trend = model[0];                         /* indicator for trend       */                 \
     const int season = model[1];                        /* indicator for seasonality */                 \
@@ -49,6 +50,7 @@ inline void update_seasonal_mat_multiplicative(arma::mat& S_mat, const double up
     const int normseason = model[4];                                                                    \
                                                                                                         \
     arma::vec Y(y.begin(),y.size(),false,true);         /* observed data */                             \
+    arma::vec good_values(good.begin(),good.size(),false,true);         /* observed data */             \
     arma::vec X(x.begin(),x.size(),false,true);         /* external data (X'rho) */                     \
                                                                                                         \
     arma::rowvec sinit = as<arma::rowvec>(s0);          /* initial m - 1 seasonal parameters */         \

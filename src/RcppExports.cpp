@@ -7,8 +7,8 @@
 using namespace Rcpp;
 
 // filter_aaa
-Rcpp::List filter_aaa(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_);
-RcppExport SEXP _tsets_filter_aaa(SEXP model_SEXP, SEXP y_SEXP, SEXP pars_SEXP, SEXP s0_SEXP, SEXP x_SEXP) {
+Rcpp::List filter_aaa(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_, SEXP good_);
+RcppExport SEXP _tsets_filter_aaa(SEXP model_SEXP, SEXP y_SEXP, SEXP pars_SEXP, SEXP s0_SEXP, SEXP x_SEXP, SEXP good_SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -17,13 +17,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type pars_(pars_SEXP);
     Rcpp::traits::input_parameter< SEXP >::type s0_(s0_SEXP);
     Rcpp::traits::input_parameter< SEXP >::type x_(x_SEXP);
-    rcpp_result_gen = Rcpp::wrap(filter_aaa(model_, y_, pars_, s0_, x_));
+    Rcpp::traits::input_parameter< SEXP >::type good_(good_SEXP);
+    rcpp_result_gen = Rcpp::wrap(filter_aaa(model_, y_, pars_, s0_, x_, good_));
     return rcpp_result_gen;
 END_RCPP
 }
 // filter_mmm
-Rcpp::List filter_mmm(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_);
-RcppExport SEXP _tsets_filter_mmm(SEXP model_SEXP, SEXP y_SEXP, SEXP pars_SEXP, SEXP s0_SEXP, SEXP x_SEXP) {
+Rcpp::List filter_mmm(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_, SEXP good_);
+RcppExport SEXP _tsets_filter_mmm(SEXP model_SEXP, SEXP y_SEXP, SEXP pars_SEXP, SEXP s0_SEXP, SEXP x_SEXP, SEXP good_SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -32,13 +33,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type pars_(pars_SEXP);
     Rcpp::traits::input_parameter< SEXP >::type s0_(s0_SEXP);
     Rcpp::traits::input_parameter< SEXP >::type x_(x_SEXP);
-    rcpp_result_gen = Rcpp::wrap(filter_mmm(model_, y_, pars_, s0_, x_));
+    Rcpp::traits::input_parameter< SEXP >::type good_(good_SEXP);
+    rcpp_result_gen = Rcpp::wrap(filter_mmm(model_, y_, pars_, s0_, x_, good_));
     return rcpp_result_gen;
 END_RCPP
 }
 // filter_mam
-Rcpp::List filter_mam(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_);
-RcppExport SEXP _tsets_filter_mam(SEXP model_SEXP, SEXP y_SEXP, SEXP pars_SEXP, SEXP s0_SEXP, SEXP x_SEXP) {
+Rcpp::List filter_mam(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_, SEXP good_);
+RcppExport SEXP _tsets_filter_mam(SEXP model_SEXP, SEXP y_SEXP, SEXP pars_SEXP, SEXP s0_SEXP, SEXP x_SEXP, SEXP good_SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -47,13 +49,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type pars_(pars_SEXP);
     Rcpp::traits::input_parameter< SEXP >::type s0_(s0_SEXP);
     Rcpp::traits::input_parameter< SEXP >::type x_(x_SEXP);
-    rcpp_result_gen = Rcpp::wrap(filter_mam(model_, y_, pars_, s0_, x_));
+    Rcpp::traits::input_parameter< SEXP >::type good_(good_SEXP);
+    rcpp_result_gen = Rcpp::wrap(filter_mam(model_, y_, pars_, s0_, x_, good_));
     return rcpp_result_gen;
 END_RCPP
 }
 // filter_powermam
-Rcpp::List filter_powermam(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_);
-RcppExport SEXP _tsets_filter_powermam(SEXP model_SEXP, SEXP y_SEXP, SEXP pars_SEXP, SEXP s0_SEXP, SEXP x_SEXP) {
+Rcpp::List filter_powermam(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_, SEXP good_);
+RcppExport SEXP _tsets_filter_powermam(SEXP model_SEXP, SEXP y_SEXP, SEXP pars_SEXP, SEXP s0_SEXP, SEXP x_SEXP, SEXP good_SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -62,7 +65,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type pars_(pars_SEXP);
     Rcpp::traits::input_parameter< SEXP >::type s0_(s0_SEXP);
     Rcpp::traits::input_parameter< SEXP >::type x_(x_SEXP);
-    rcpp_result_gen = Rcpp::wrap(filter_powermam(model_, y_, pars_, s0_, x_));
+    Rcpp::traits::input_parameter< SEXP >::type good_(good_SEXP);
+    rcpp_result_gen = Rcpp::wrap(filter_powermam(model_, y_, pars_, s0_, x_, good_));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -132,10 +136,10 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_tsets_filter_aaa", (DL_FUNC) &_tsets_filter_aaa, 5},
-    {"_tsets_filter_mmm", (DL_FUNC) &_tsets_filter_mmm, 5},
-    {"_tsets_filter_mam", (DL_FUNC) &_tsets_filter_mam, 5},
-    {"_tsets_filter_powermam", (DL_FUNC) &_tsets_filter_powermam, 5},
+    {"_tsets_filter_aaa", (DL_FUNC) &_tsets_filter_aaa, 6},
+    {"_tsets_filter_mmm", (DL_FUNC) &_tsets_filter_mmm, 6},
+    {"_tsets_filter_mam", (DL_FUNC) &_tsets_filter_mam, 6},
+    {"_tsets_filter_powermam", (DL_FUNC) &_tsets_filter_powermam, 6},
     {"_tsets_simulate_aaa", (DL_FUNC) &_tsets_simulate_aaa, 6},
     {"_tsets_simulate_mmm", (DL_FUNC) &_tsets_simulate_mmm, 6},
     {"_tsets_simulate_mam", (DL_FUNC) &_tsets_simulate_mam, 6},

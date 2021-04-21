@@ -89,7 +89,13 @@ init_states <- function(y, trend_type = "A", season_type = "M", frequency = 12){
       }
     } else {
       # n is large enough to do a decomposition
-      y_d <- decompose(y, type = switch(season_type, A = "additive", M = "multiplicative"))
+      if (season_type == "M") {
+        y_d <- stlplus(log(as.numeric(y)), s.window = "periodic", n.p = frequency)
+        y_d <- list(seasonal = exp(y_d$data$seasonal))
+      } else {
+        y_d <- stlplus(as.numeric(y), s.window = "periodic", n.p = frequency)
+        y_d <- list(seasonal = y_d$data$seasonal)
+      }
     }
     # Initial seasonal component
     init_seas <- rev(y_d$seasonal[2:frequency])
@@ -112,11 +118,11 @@ init_states <- function(y, trend_type = "A", season_type = "M", frequency = 12){
   }
   maxn <- min(max(10, 2 * frequency), length(y_sa))
   if (trend_type == "N") {
-    l0 <- mean(y_sa[1:maxn])
+    l0 <- mean(na.omit(y_sa)[1:maxn])
     b0 <- NULL
   } else {
     # Simple linear regression on seasonally adjusted data
-    fit <- lsfit(1:maxn, y_sa[1:maxn])
+    fit <- lsfit(1:maxn, na.omit(as.numeric(y_sa))[1:maxn])
     if (trend_type == "A") {
       l0 <- fit$coef[1]
       b0 <- fit$coef[2]
