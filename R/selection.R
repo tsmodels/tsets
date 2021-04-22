@@ -13,7 +13,7 @@ auto_ets = function(y, xreg = NULL, lambda = NA, metric = "AIC", frequency = NUL
     if (!is.null(lambda)) warning("\ninvalid selection metric when transform is not NULL (models will not be comparable)")
   }
 
-  if (any(y < 0) && !additive_only) {
+  if (any(y < 0, na.rm = T) && !additive_only) {
     warning("the data contains negative values; not suitable for multiplicative models!")
   }
   valid_models <- c("AAA","AAN","ANN","ANA","Theta")

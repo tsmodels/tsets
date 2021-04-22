@@ -118,7 +118,7 @@ init_states <- function(y, trend_type = "A", season_type = "M", frequency = 12){
   }
   maxn <- min(max(10, 2 * frequency), length(y_sa))
   if (trend_type == "N") {
-    l0 <- mean(na.omit(y_sa)[1:maxn])
+    l0 <- mean(na.omit(as.numeric(y_sa))[1:maxn])
     b0 <- NULL
   } else {
     # Simple linear regression on seasonally adjusted data

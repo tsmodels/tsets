@@ -173,6 +173,11 @@ tsfilter.tsets.estimate = function(object, y, newxreg = NULL, ...)
   }
   newindex <- index(y)
   yneworig <- y
+  good <- rep(1, NROW(yneworig))
+  if (any(is.na(yneworig))) {
+    good[which(is.na(yneworig))] <- 0
+  }
+  
   if (!is.null(object$spec$transform)) {
     y <- object$spec$transform$transform(yneworig, object$spec$transform$lambda)
   } else{
@@ -186,6 +191,7 @@ tsfilter.tsets.estimate = function(object, y, newxreg = NULL, ...)
   theta <- object$model$setup$parmatrix["theta",1]
   frequency <- object$spec$seasonal$frequency
   setup <- object$model$setup
+  setup$good <- c(1, good)
   pnames <- rownames(object$model$setup$parmatrix)
   s0 <- as.numeric(tail(object$model$states[,paste0("S",0:(frequency - 1))],1))
   l0 <- tail(object$model$states[,"Level"],1)
@@ -246,7 +252,9 @@ onlinefilter_aaa = function(y, alpha, beta, gamma, phi = 1, l0, b0, s0, frequenc
       a <- 0
     }
     f[i] <- lmat[i - 1] + phi * bmat[i - 1] + smat[i - 1, frequency] + x[i]
-    err[i] <- (y[i] - f[i])
+    if (setup$good[i] == 1) {
+      err[i] <- (y[i] - f[i])
+    }
     lmat[i] <- (lmat[i - 1] + phi * bmat[i - 1] + alpha * err[i]) + a
     if (setup$include_trend == 1) bmat[i] <- bmat[i - 1] * phi + beta * err[i]
     if (setup$include_seasonal == 1) {
@@ -276,7 +284,9 @@ onlinefilter_mmm = function(y, alpha, beta, gamma, phi = 1, l0, b0, s0, frequenc
   y <- c(0, as.numeric(y))
   for (i in 2:(n + 1)) {
     f[i] <- lmat[i - 1] * (bmat[i - 1]^phi) * smat[i - 1, frequency] + x[i]
-    err[i] <- (y[i] - f[i]) / f[i]
+    if (setup$good[i] == 1) {
+      err[i] <- (y[i] - f[i]) / f[i]
+    }
     if (setup$normalized_seasonality) {
       a <- 1 + gamma/frequency * err[i] * smat[i - 1, frequency]
     } else {
@@ -313,7 +323,9 @@ onlinefilter_mam = function(y, alpha, beta, gamma, phi = 1, l0, b0, s0, frequenc
 
   for (i in 2:(n + 1)) {
     f[i] <- (lmat[i - 1] + phi * bmat[i - 1] + x[i]) * smat[i - 1, frequency]
-    err[i] <- (y[i] - f[i]) / f[i]
+    if (setup$good[i] == 1) {
+      err[i] <- (y[i] - f[i]) / f[i]
+    }
     if (setup$normalized_seasonality) {
       a <- 1 + gamma/frequency * err[i] * smat[i - 1, frequency]
     } else {
@@ -348,7 +360,9 @@ onlinefilter_powermam = function(y, alpha, beta, gamma, phi = 1, l0, b0, s0, fre
   for (i in 2:(n + 1)) {
     f[i] <- (lmat[i - 1] + phi * bmat[i - 1] + x[i]) * smat[i - 1, frequency]
     fd[i] <- ((lmat[i - 1] + phi * bmat[i - 1] + x[i])^theta) * (smat[i - 1, frequency]^delta)
-    err[i] <- (y[i] - f[i]) / fd[i]
+    if (setup$good[i] == 1) {
+      err[i] <- (y[i] - f[i]) / fd[i]
+    }
     lmat[i] <- (lmat[i - 1] + phi * bmat[i - 1]) + alpha * ((lmat[i - 1] + phi * bmat[i - 1])^theta) * (smat[i - 1, frequency]^(delta - 1)) * err[i]
     if (setup$include_trend == 1) bmat[i] = phi * bmat[i - 1] + beta * ((lmat[i - 1] + phi * bmat[i - 1])^theta) * (smat[i - 1, frequency]^(delta - 1)) * err[i]
     if (setup$include_seasonal == 1) {

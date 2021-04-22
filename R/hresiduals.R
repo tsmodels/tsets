@@ -28,7 +28,7 @@ hresiduals.tsets.estimate <- function(object, h = 12, cores = 1, seed = NULL, tr
     stopCluster(cl)
     h_residuals <- rbindlist(h_residuals)
     h_residuals <- dcast(h_residuals, date~horizon, value.var = "error")
-    h_residuals <- na.omit(h_residuals)
+    # h_residuals <- na.omit(h_residuals)
     return(h_residuals)
 }
 

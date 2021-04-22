@@ -56,7 +56,7 @@ simulate.tsets.estimate  = function(object, nsim = 1, seed = NULL, h = NULL, new
   type <- object$spec$model$type
   
   if (bootstrap) {
-    res <- object$model$residuals
+    res <- as.numeric(na.omit(object$model$residuals))
     res <- res * sigma_scale
     E <- matrix(sample(res, (h * nsim), replace = TRUE), ncol = h, nrow = nsim)
   } else {

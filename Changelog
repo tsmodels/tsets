@@ -3,6 +3,7 @@
 as for the likelihood/estimation (which is estimated on the non missing values),
 with zero noise filtering (mean prediction) performed on the missing values in
 the states.
+- Update: all methods now corrected to work with missing values
 
 # 2021-04-07 v0.1.8 [AG]
 - Added power_model option in auto_ets with default of FALSE (power MAM models 

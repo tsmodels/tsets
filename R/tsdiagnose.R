@@ -5,6 +5,7 @@ check_parameters <- function(object)
     cf <- coef(object)
     cf_names <- names(cf)
     r <- residuals(object, raw = TRUE)
+    r <- as.numeric(na.omit(r))
     if (error_type == "Additive") {
         if (any(cf_names == "beta")) {
             condition_slope <- cf["beta"]  <= (cf["alpha"] - 0.01)
@@ -38,7 +39,7 @@ check_parameters <- function(object)
 tsdiagnose.tsets.estimate <- function(object, plot = FALSE, ...)
 {
     ctable <- check_parameters(object)
-    r <- scale(residuals(object), center = FALSE, scale = TRUE)
+    r <- scale(as.numeric(na.omit(residuals(object))), center = FALSE, scale = TRUE)
     j <- 0
     df <- 0
     b1 <- weighted_box_test(r, lag = 1, type = "Ljung-Box", fitdf = 0)
@@ -56,9 +57,9 @@ tsdiagnose.tsets.estimate <- function(object, plot = FALSE, ...)
     if (object$spec$model$error != "Additive") {
         cat("\n(raw model residuals lower bound = -1)\n")
     }
-    rtest <- rosnerTest(as.numeric(residuals(object)), k = 10)
+    rtest <- rosnerTest(as.numeric(na.omit(residuals(object))), k = 10)
     if (any(rtest$all.stats$Outlier)) {
-        out.index <- object$spec$target$index[rtest$all.stats$Obs.Num[rtest$all.stats$Outlier]]
+        out.index <- object$spec$target$index[which(object$model$setup$good == 1)][rtest$all.stats$Obs.Num[rtest$all.stats$Outlier]]
         cat("\nOutlier Diagnostics (based on Rosner Test)")
         cat("\n------------------------------------------")
         cat("\nOutliers:", as.character(out.index))
@@ -66,7 +67,7 @@ tsdiagnose.tsets.estimate <- function(object, plot = FALSE, ...)
         out.index <- NULL
     }
     if (plot) {
-        rw <- residuals(object, raw = TRUE)
+        rw <- na.omit(residuals(object, raw = TRUE))
         par(mfrow = c(3,1), mar = c(3,3,3,3))
         acf(as.numeric(r), type = "correlation", main = "Residuals Autocorrelation")
         hist(rw, breaks = "fd", main = "Model Residuals Histogram", probability = T)
@@ -74,7 +75,7 @@ tsdiagnose.tsets.estimate <- function(object, plot = FALSE, ...)
         qqnorm(rw, main = "Model Residuals Normal Q-Q Plot")
         qqline(rw, col = 2)
     }
-    L <- list(lb_test = lbsr, outliers = rtest$all.stats, parameter_bounds = ctable)
+    L <- list(lb_test = lbsr, outliers = rtest$all.stats, outlier_index = out.index, parameter_bounds = ctable)
     return(invisible(L))
 }
 
