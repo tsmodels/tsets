@@ -10,7 +10,7 @@ Automatic model selection based on choice of criteria.
 auto_ets(y, xreg = NULL, lambda = NA, metric = "AIC", frequency = NULL, 
 normalized_seasonality = TRUE, additive_only = FALSE, cores = NULL, 
 solver = "nlminb", control = list(trace = 0, maxit = 1000), 
-power_model = FALSE, verbose = FALSE, retain = 1, scale = FALSE, 
+power_model = FALSE, include_damped = TRUE, verbose = FALSE, retain = 1, scale = FALSE, 
 seasonal_init = "fixed", ...)
 }
 \arguments{
@@ -50,6 +50,9 @@ The solver control parameters.
 }
 \item{power_model}{
 Wether to include the power MAM models.
+}
+\item{include_damped}{
+Whether to include damped models in the selection.
 }
 \item{verbose}{
 Whether to generate verbose output.

@@ -1,13 +1,11 @@
 estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace = 0), ...)
 {
   # create an environment for the soft barrier solver
-  tic <- Sys.time()
   ets_env <- new.env(hash = TRUE)
   assign("ets_llh", 1, envir = ets_env)
   setup <- object$model
   pars <- setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"init"]
   setup$parnames <- names(pars)
-  
   setup$data <- as.numeric(object$target$y)
   setup$good <- rep(1, length(setup$data))
   setup$good[which(is.na(setup$data))] <- 0
@@ -16,11 +14,9 @@ estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace 
   setup$xreg <- object$xreg$xreg
   setup$k <- ncol(object$xreg$xreg)
   setup$ets_env <- ets_env
-  
   lfun <- tsets_ll_fun(setup$type)
   ffun <- tsets_filter_fun(setup$type)
   setup$estimation <- 1
-  
   # find parameter scaling
   if (any(grepl("rho",names(pars)))) {
     ix <- which(grepl("rho",names(pars)))
@@ -35,8 +31,8 @@ estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace 
   } else {
     parscale <- rep(1, length(pars))
   }
-  
-  # run solver
+  tic <- Sys.time()
+    # run solver
   setup$debug <- FALSE
   if (solver == "nlminb") {
     opt_res <- nlminb(start = pars, objective = lfun, lower = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"lower"],
@@ -89,7 +85,6 @@ estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace 
   } else {
     stop("\nsolver must be either solnp, nlminb or optim")
   }
-  
   if (object$target$scaler != 1 & object$model$type == 1) {
     pnames <- names(pars)
     pars["l0"] <- pars["l0"] * object$target$scaler

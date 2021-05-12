@@ -2,7 +2,8 @@
 auto_ets = function(y, xreg = NULL, lambda = NA, metric = "AIC", frequency = NULL,
                    normalized_seasonality = TRUE, additive_only = FALSE, cores = NULL, 
                    solver = "nlminb", control = list(trace = 0, maxit = 1000), 
-                   power_model = FALSE, verbose = FALSE, retain = 1, scale = FALSE, seasonal_init = "fixed", ...)
+                   power_model = FALSE, include_damped = TRUE, 
+                   verbose = FALSE, retain = 1, scale = FALSE, seasonal_init = "fixed", ...)
 {
   # sanity check of model input
   valid_criteria <- c("AIC","BIC","AICc","MAPE","MASE","MSLRE")
@@ -41,6 +42,9 @@ auto_ets = function(y, xreg = NULL, lambda = NA, metric = "AIC", frequency = NUL
 
   sgrid <- rbind( cbind(sgrid, data.frame(damped = rep(0, nrow(sgrid)))), cbind(sgrid, data.frame(damped = rep(1,nrow(sgrid)))) )
   sgrid[which(substr(sgrid$model,2,2) == "N"), "damped"] <- 0
+  if (!include_damped) {
+    sgrid <- sgrid[-which(sgrid$damped == 1),]
+  }
   ngrid <- NROW(sgrid)
 
   unid <- sapply(1:ngrid, function(i) paste0(sgrid$model[i], sgrid$power[i], sgrid$damped[i]))
