@@ -263,7 +263,7 @@ tsets_ll_mmm <- function(pars, setup)
         return(get("ets_llh", ets_env) + 0.1 * (abs(get("ets_llh", ets_env))))
       }
     }
-    n <- length(setup$data[which(setup$good == 1)])
+    n <- sum(setup$good) - 1
     Error <- f$Error[which(setup$good == 1)]
     Filt <- f$Filtered[which(setup$good == 1)]
     out <- n * log(sum(Error[-1]^2)) + 2 * sum(log(abs(Filt[-1])))
@@ -335,7 +335,7 @@ tsets_ll_mam <- function(pars, setup)
         return(get("ets_llh", ets_env) + 0.1 * (abs(get("ets_llh", ets_env))))
       }
     }
-    n <- length(setup$data[which(setup$good == 1)])
+    n <- sum(setup$good) - 1
     Error <- f$Error[which(setup$good == 1)]
     Filt <- f$Filtered[which(setup$good == 1)]
     out <- n * log(sum(Error[-1]^2)) + 2 * sum(log(abs(Filt[-1])))
@@ -397,7 +397,7 @@ tsets_ll_powermam <- function(pars, setup)
   if (setup$estimation == 1) {
     if (any(is.na(f$Error))) return(get("ets_llh", ets_env) + 0.1 * (abs(get("ets_llh", ets_env))))
   }
-  n <- length(setup$data[which(setup$good == 1)])
+  n <- sum(setup$good) - 1
   Error <- f$Error[which(setup$good == 1)]
   Filt <- f$Fpower[which(setup$good == 1)]
   out <- n * log(sum(Error[-1]^2)) + 2 * sum(log(abs(Filt[-1])))
