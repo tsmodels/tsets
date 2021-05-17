@@ -1,6 +1,6 @@
 tsbacktest.tsets.spec <- function(object, start = floor(length(object$target$y_orig))/2, end = length(object$target$y_orig),
                                   h = 1, alpha = NULL, cores = 1, data_name = "y", save_output = FALSE, 
-                                  save_dir = "~/tmp/", solver = "optim", trace = FALSE, ...)
+                                  save_dir = "~/tmp/", solver = "nlminb", autodiff = FALSE, trace = FALSE, ...)
 {
     if (save_output) {
         if (is.null(save_dir)) {
@@ -76,7 +76,7 @@ tsbacktest.tsets.spec <- function(object, start = floor(length(object$target$y_o
         spec <- ets_modelspec(ytrain, model = model, damped = damped, power = power, xreg = xreg_train, 
                               frequency = frequency, transform = transform, 
                               normalized_seasonality = normalized_seasonality, seasonal_init = seasonal_init)
-        mod <- estimate(spec, solver = solver)
+        mod <- estimate(spec, solver = solver, autodiff = autodiff)
         p <- predict(mod, h = horizon[i], newxreg = xreg_test, forc_dates = index(ytest))
         if (save_output) {
             saveRDS(mod, file = paste0(save_dir,"/model_", seqdates[i], ".rds"))

@@ -10,7 +10,7 @@ and unit testing.
 }
 \usage{
 \method{tsbenchmark}{tsets.spec}(object, solver = "nlminb", 
-control = list(trace = 0), ...)
+control = list(trace = 0), autodiff = FALSE, ...)
 }
 \arguments{
 \item{object}{
@@ -21,6 +21,10 @@ The solver to use for estimation.
 }
 \item{control}{
 Any additional controls passed to the solver.
+}
+\item{autodiff}{
+Whether to use automatic differentiation for estimation. This makes use
+of the tsetsad package.
 }
 \item{\dots}{
 Not currently used

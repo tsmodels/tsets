@@ -1,13 +1,13 @@
-tsprofile.tsets.estimate <- function(object, h = 1, nsim = 100, seed = NULL, cores = 1, trace = 0, sigma_scale = 1, solver = "optim", ...)
+tsprofile.tsets.estimate <- function(object, h = 1, nsim = 100, seed = NULL, cores = 1, trace = 0, sigma_scale = 1, solver = "nlminb", autodiff = FALSE, ...)
 {
     sim <- simulate(object, seed = seed, nsim = nsim, h = length(object$spec$target$y_orig) + h, sigma_scale = sigma_scale)
-    profile <- profile_fun(sim$Simulated, object, h, cores = cores, trace = trace, solver = solver)
+    profile <- profile_fun(sim$Simulated, object, h, cores = cores, trace = trace, solver = solver, autodiff = autodiff)
     profile$sigma <- sim$sigma * sim$sigma_scale
     class(profile) <- "tsets.profile"
     return(profile)
 }
 
-profile_fun <- function(sim, object, h, cores, trace, solver)
+profile_fun <- function(sim, object, h, cores, trace, solver, autodiff = FALSE)
 {
     cl <- makeCluster(cores)
     registerDoSNOW(cl)
@@ -27,7 +27,7 @@ profile_fun <- function(sim, object, h, cores, trace, solver)
         yin <- y[1:(nrow(y) - h)]
         spec <- tsspec(object, yin, lambda = object$spec$transform$lambda)
         # add try catch
-        mod <- estimate(spec, solver = solver)
+        mod <- estimate(spec, solver = solver, autodiff = autodiff)
         p <- predict(mod, h = h)
         L1 <- data.table("Variable" = names(coef(mod)), "Value" = coef(mod), "Simulation" = i)
         L2 <- data.table("Predicted" = as.numeric(p$mean), "Actual" = as.numeric(tail(y, h)), "Simulation" = i, "Horizon" = 1:h)
