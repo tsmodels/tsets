@@ -184,10 +184,10 @@ tsets_ll_aaa <- function(pars, setup)
 
   # soft barrier
   if (setup$estimation == 1) {
-    if (beta  >= (alpha - 0.01)) {
+    if (beta  >= (alpha - 1e-6)) {
       return(get("ets_llh", ets_env) + 0.2 * (abs(get("ets_llh", ets_env))))
     }
-    if (gamma >= (1 - alpha - 0.01)) {
+    if (gamma >= (1 - alpha - 1e-6)) {
       return(get("ets_llh", ets_env) + 0.2 * (abs(get("ets_llh", ets_env))))
     }
   }
@@ -319,7 +319,7 @@ tsets_ll_mam <- function(pars, setup)
   }
 
   if (setup$estimation == 1) {
-    if (beta >= (alpha - 0.01)) {
+    if (beta >= (alpha - 1e-6)) {
       return(get("ets_llh", ets_env) + 0.1 * (abs(get("ets_llh", ets_env))))
     }
   }
@@ -386,7 +386,7 @@ tsets_ll_powermam <- function(pars, setup)
     x <- rep(0, length(setup$data) + 1)
   }
   if (setup$estimation == 1) {
-    if (beta >= (alpha - 0.01)) return(get("ets_llh", ets_env) + 0.1 * (abs(get("ets_llh", ets_env))))
+    if (beta >= (alpha - 1e-6)) return(get("ets_llh", ets_env) + 0.1 * (abs(get("ets_llh", ets_env))))
   }
 
   pars <- as.numeric(parmatrix[c("l0","b0","alpha","beta","gamma","phi","theta","delta"),1])

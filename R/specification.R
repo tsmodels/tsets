@@ -108,9 +108,8 @@ ets_modelspec <- function(y, model = "AAN", damped = FALSE, power = FALSE, xreg 
   }
 
   p <- init_model(model = model, damped = damped, power = power, frequency = spec$seasonal$frequency, y = y, xreg = xreg)
-  p <- check_fixed(p, fixed_pars)
-
   # check fixed parameters
+  p <- check_fixed(p, fixed_pars)
   spec$target$y <- as.numeric(y)
   spec$target$y_orig <- as.numeric(y_orig)
   spec$target$scaler <- scaler
@@ -142,6 +141,26 @@ ets_modelspec <- function(y, model = "AAN", damped = FALSE, power = FALSE, xreg 
       fixed_s_names <- paste0("s",0:(frequency - 2))
       p[fixed_s_names,"estimate"] <- 0
       p[fixed_s_names,"fixed"] <- 1
+    }
+  }
+  # if alpha, beta or gamma are fixed for models AAA or MAM then we need to impose lower or upper bounds
+  if (spec$model$type == 1) {
+    if (p["alpha", "fixed"] == 1 & p["beta","estimate"] == 1) {
+      p["beta","upper"] <- p["alpha", "init"] - 1e-6
+    }
+    if (p["alpha", "fixed"] == 1 & p["gamma","estimate"] == 1) {
+      p["gamma","upper"] <- 1 - p["alpha", "init"] - 1e-6
+    }
+    if (p["beta", "fixed"] == 1 & p["alpha","estimate"] == 1) {
+      p["alpha","lower"] <- p["beta", "init"] + 1e-6
+    }
+  }
+  if (spec$model$type == 3) {
+    if (p["alpha", "fixed"] == 1 & p["beta","estimate"] == 1) {
+      p["beta","upper"] <- p["alpha", "init"] - 1e-6
+    }
+    if (p["beta", "fixed"] == 1 & p["alpha","estimate"] == 1) {
+      p["alpha","lower"] <- p["beta", "init"] + 1e-6
     }
   }
   spec$model$parmatrix <- p
