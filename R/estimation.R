@@ -71,11 +71,11 @@ estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace 
     mult_trend <- (setup$type == 2)
     mult_seasonality <- (setup$type == 2) || (setup$type == 3) || (setup$type == 4)
     setup$impose_bounds <- TRUE
-    inp_pars_trans <- pars_estim_pre_trans(pars,mult_trend,mult_seasonality)
+    inp_pars_trans <- pars_estim_pre_trans(pars,mult_trend,mult_seasonality, setup$parmatrix)
     opt_res <- optim(par = inp_pars_trans, fn = lfun, setup = setup, method = "Nelder-Mead", control = control)
     #
     setup$impose_bounds <- FALSE
-    pars_inp <- pars_estim_inv_trans(opt_res$par,mult_trend,mult_seasonality)
+    pars_inp <- pars_estim_inv_trans(opt_res$par,mult_trend,mult_seasonality, setup$parmatrix)
     opt_res <- optim(par = pars_inp, fn = lfun, lower = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"lower"],
                      upper = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"upper"], setup = setup,
                      method = "L-BFGS-B", control = control, hessian = F)
@@ -160,7 +160,7 @@ tsets_ll_aaa <- function(pars, setup)
   names(pars) <- setup$parnames
   if (!is.null(setup$impose_bounds)) {
     if (setup$impose_bounds) {
-      pars <- pars_estim_inv_trans(pars,FALSE,FALSE)
+      pars <- pars_estim_inv_trans(pars,FALSE,FALSE,setup$parmatrix)
     }
   }
   parmatrix <- setup$parmatrix
@@ -230,7 +230,7 @@ tsets_ll_mmm <- function(pars, setup)
 
   if (!is.null(setup$impose_bounds)) {
     if (setup$impose_bounds) {
-      pars <- pars_estim_inv_trans(pars,TRUE,TRUE)
+      pars <- pars_estim_inv_trans(pars,TRUE,TRUE,setup$parmatrix)
     }
   }
   parmatrix <- setup$parmatrix
@@ -294,7 +294,7 @@ tsets_ll_mam <- function(pars, setup)
 
   if (!is.null(setup$impose_bounds)) {
     if (setup$impose_bounds) {
-      pars <- pars_estim_inv_trans(pars,FALSE,TRUE)
+      pars <- pars_estim_inv_trans(pars,FALSE,TRUE,setup$parmatrix)
     }
   }
   parmatrix <- setup$parmatrix
@@ -366,7 +366,7 @@ tsets_ll_powermam <- function(pars, setup)
 
   if (!is.null(setup$impose_bounds)) {
     if (setup$impose_bounds) {
-      pars <- pars_estim_inv_trans(pars,FALSE,TRUE)
+      pars <- pars_estim_inv_trans(pars,FALSE,TRUE,setup$parmatrix)
     }
   }
 
@@ -446,64 +446,67 @@ gen_inv_logit_trans <- function(val_trans_inp,lower_bound,upper_bound)
   return(par_val_out)
 }
 
-pars_estim_pre_trans <- function(pars, mult_trend, mult_season)
+pars_estim_pre_trans <- function(pars, mult_trend, mult_season, parmatrix)
 {
   pars_names <- names(pars)
 
   if ("alpha" %in% pars_names) {
     orig_alph <- pars["alpha"]
-    pars["alpha"] <- gen_logit_trans(pars["alpha"], 0, 1)
+    pars["alpha"] <- gen_logit_trans(pars["alpha"], parmatrix["alpha","lower"], parmatrix["alpha","upper"])
   }
 
   if ("beta" %in% pars_names) {
     if (mult_trend) {
-      pars["beta"] <- gen_logit_trans(pars["beta"], 0, 1)
+      pars["beta"] <- gen_logit_trans(pars["beta"], parmatrix["beta","lower"], parmatrix["beta","upper"])
     } else {
-      pars["beta"] <- gen_logit_trans(pars["beta"], 0, orig_alph)
+      if ("alpha" %in% pars_names) apar <- pars["alpha"] else apar <- parmatrix["alpha","init"]
+      pars["beta"] <- gen_logit_trans(pars["beta"], 0, apar - 1e-6)
     }
   }
 
   if ("gamma" %in% pars_names) {
     if (mult_season) {
-      pars["gamma"] <- gen_logit_trans(pars["gamma"], 0, 1)
+      pars["gamma"] <- gen_logit_trans(pars["gamma"], parmatrix["gamma","lower"], parmatrix["gamma","upper"])
     } else {
-      pars["gamma"] <- gen_logit_trans(pars["gamma"], 0, 1 - orig_alph)
+      if ("alpha" %in% pars_names) apar <- pars["alpha"] else apar <- parmatrix["alpha","init"]
+      pars["gamma"] <- gen_logit_trans(pars["gamma"], 0, 1 - apar - 1e-6)
     }
   }
 
   if ("phi" %in% pars_names) {
-    pars["phi"] <- gen_logit_trans(pars["phi"],0.5,1)
+    pars["phi"] <- gen_logit_trans(pars["phi"], parmatrix["phi","lower"], parmatrix["phi","upper"])
   }
 
   return(pars)
 }
 
-pars_estim_inv_trans <- function(pars, mult_trend, mult_season)
+pars_estim_inv_trans <- function(pars, mult_trend, mult_season, parmatrix)
 {
   pars_names <- names(pars)
 
   if ("alpha" %in% pars_names) {
-    pars["alpha"] <- gen_inv_logit_trans(pars["alpha"], 0, 1)
+    pars["alpha"] <- gen_inv_logit_trans(pars["alpha"], parmatrix["alpha","lower"], parmatrix["alpha","upper"])
   }
-
   if ("beta" %in% pars_names) {
     if (mult_trend) {
-      pars["beta"] <- gen_inv_logit_trans(pars["beta"], 0, 1)
+      pars["beta"] <- gen_inv_logit_trans(pars["beta"], parmatrix["beta","lower"], parmatrix["beta","upper"])
     } else {
-      pars["beta"] <- gen_inv_logit_trans(pars["beta"], 0, pars["alpha"])
+      if ("alpha" %in% pars_names) apar <- pars["alpha"] else apar <- parmatrix["alpha","init"]
+      pars["beta"] <- gen_inv_logit_trans(pars["beta"], 0, apar)
     }
   }
 
   if ("gamma" %in% pars_names) {
     if (mult_season) {
-      pars["gamma"] <- gen_inv_logit_trans(pars["gamma"], 0, 1)
+      pars["gamma"] <- gen_inv_logit_trans(pars["gamma"], parmatrix["gamma","lower"], parmatrix["gamma","upper"])
     } else {
-      pars["gamma"] <- gen_inv_logit_trans(pars["gamma"], 0, 1 - pars["alpha"])
+      if ("alpha" %in% pars_names) apar <- pars["alpha"] else apar <- parmatrix["alpha","init"]
+      pars["gamma"] <- gen_inv_logit_trans(pars["gamma"], 0, 1 - apar - 1e-6)
     }
   }
 
   if ("phi" %in% pars_names) {
-    pars["phi"] <- gen_inv_logit_trans(pars["phi"], 0.5, 1)
+    pars["phi"] <- gen_inv_logit_trans(pars["phi"], parmatrix["phi","lower"], parmatrix["phi","upper"])
   }
 
   return(pars)

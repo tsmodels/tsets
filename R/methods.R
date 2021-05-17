@@ -111,7 +111,7 @@ coef.tsets.estimate = function(object, ...)
 summary.tsets.estimate = function(object, digits = 4, ...)
 {
   parmatrix <- object$model$setup$parmatrix
-  pmatrix   <- parmatrix[which(parmatrix[,"estimate"] == 1),]
+  pmatrix <- parmatrix
   pmatrix   <- rbind(pmatrix,parmatrix["sigma",,drop = FALSE])
   pmatrix   <- cbind(pmatrix,data.frame("." = rep(NA, nrow(pmatrix))))
   pnames    <- rownames(pmatrix)
@@ -152,7 +152,8 @@ summary.tsets.estimate = function(object, digits = 4, ...)
   pmatrix[which(grepl("alpha",pnames)),"."] <- "State[Level-coef]"
   pmatrix[which(grepl("l0",pnames)),"."] <- "State[Level-init]"
   pmatrix[which(grepl("sigma",pnames)),"."] <- "Observation[Standard Deviation]"
-
+  # only using what we estimated
+  pmatrix <- pmatrix[which(pmatrix[,"estimate"] == 1), ]
   if (object$spec$model$include_damped == 1) {
     modelx <- paste0(substr(object$spec$model$model,1,1),substr(object$spec$model$model,2,2),"d",substr(object$spec$model$model,3,3))
   } else {
