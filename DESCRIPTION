@@ -14,7 +14,7 @@ License: GPL-2
 Depends: R (>= 3.5), Rcpp (>= 0.12.9), tsmethods
 SystemRequirements: C++11, GNU make
 LinkingTo: Rcpp (>= 0.12.9), RcppArmadillo
-Imports: methods, tsaux, zoo, xts, data.table, lubridate, rmarkdown, bookdown, Rsolnp, EnvStats, viridis, snow, foreach, doSNOW, doParallel, truncnorm, stlplus, tsetsad
-Suggests: knitr, kableExtra
+Imports: methods, tsaux, zoo, xts, knitr, data.table, lubridate, rmarkdown, bookdown, Rsolnp, EnvStats, viridis, snow, foreach, doSNOW, doParallel, truncnorm, stlplus, tsetsad
+Suggests: kableExtra
 Encoding: UTF-8
 LazyData: true

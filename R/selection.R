@@ -77,7 +77,7 @@ auto_ets = function(y, xreg = NULL, lambda = NA, metric = "AIC", frequency = NUL
 
       spec <- suppressWarnings(ets_modelspec(y, model = sgrid[i,'model'], lambda = lambda, damped = damped_option_i, power = power_option_i,
                                             xreg = xreg, frequency = frequency, normalized_seasonality = normalized_seasonality,
-                                            scale = scale, seasonal.init = seasonal_init))
+                                            scale = scale, seasonal_init = seasonal_init))
       mod <- estimate(spec, solver = solver, control = control, autodiff = autodiff)
       return(mod)
     }

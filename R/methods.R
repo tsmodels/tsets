@@ -165,31 +165,24 @@ summary.tsets.estimate = function(object, digits = 4, ...)
   } else {
     cat("\nETS Model [",modelx,"]")
   }
-  cat("\n\n")
-
-  maxspace1 <- max(1,max(nchar(unlist(rownames(pmatrix)))) - 5)
-  maxspace2 <- max(1,max(nchar(unlist(pmatrix[,"."]))) - 11)
-  cat("Param",rep("",maxspace1),"Description",rep("",maxspace2),"Est[Value]")
-  maxspace3 <- 5 + maxspace1 + 11 + maxspace2 + 11
-  cat("\n",rep("-",maxspace3),sep = "")
-
   printout <- data.frame("Parameter" = rownames(pmatrix), "Description" = pmatrix[,"."], "Est[Value]" = pmatrix[,1], check.names = FALSE)
-  colnames(printout) <- NULL
-  print(printout, right = FALSE, digits = digits, row.names = FALSE)
-  cat("\n")
+  if (!is.null(object$hess)) {
+    S <- suppressWarnings(.make_standard_errors(object))
+    printout <- cbind(printout, S)
+  }
+  print(kable(printout, right = FALSE, digits = digits, row.names = FALSE, format = "simple"))
 
   mtrcs <- tsmetrics(object)
-  print(data.frame(AIC = as.numeric(sprintf(mtrcs$AIC,fmt = "%.2f")),BIC = as.numeric(sprintf(mtrcs$BIC,fmt = "%.2f")),
-                   AICc = as.numeric(sprintf(mtrcs$AICc,fmt = "%.2f"))), row.names = FALSE, right = FALSE)
-  cat("\n")
-
-  print(data.frame(MAPE = as.numeric(sprintf(mtrcs$MAPE,fmt = "%.4f")), MASE = as.numeric(sprintf(mtrcs$MASE,fmt = "%.4f")),
-                   MSLRE = as.numeric(sprintf(mtrcs$MSLRE,fmt = "%.4f")), BIAS = as.numeric(sprintf(mtrcs$BIAS,fmt = "%.4f"))), row.names = FALSE, right = FALSE)
-
+  print(kable(data.frame(LogLik = as.numeric(sprintf(mtrcs$LogLik,fmt = "%.4f")), 
+                         AIC = as.numeric(sprintf(mtrcs$AIC,fmt = "%.2f")),BIC = as.numeric(sprintf(mtrcs$BIC,fmt = "%.2f")),
+                   AICc = as.numeric(sprintf(mtrcs$AICc,fmt = "%.2f"))), format = "simple",row.names = FALSE, right = FALSE))
+  print(kable(data.frame(MAPE = as.numeric(sprintf(mtrcs$MAPE,fmt = "%.4f")), MASE = as.numeric(sprintf(mtrcs$MASE,fmt = "%.4f")),
+                         MSLRE = as.numeric(sprintf(mtrcs$MSLRE,fmt = "%.4f")), BIAS = as.numeric(sprintf(mtrcs$BIAS,fmt = "%.4f"))), format = "simple",row.names = FALSE, right = FALSE))
+  
   if (!is.null(object$selection)) {
     cat("\nModel Ranking\n")
     cat("--------------\n")
-    print(object$selection, digits = digits, row.names = FALSE)
+    print(kable(object$selection, digits = digits, row.names = FALSE, format = "simple"))
   }
   return(invisible(object))
 }
@@ -202,7 +195,7 @@ summary.tsets.estimate = function(object, digits = 4, ...)
   se <- sqrt(diag(solve(H)))
   tvalues <- pars/se
   pvalues <- 2*(1 - pnorm(abs(tvalues)))
-  
+  return(data.frame("Std. Error" = se,"t value" = tvalues, "Pr(>|t|)" = pvalues, check.names = FALSE))
 }
 .tables.tsets.estimate <- function(object, digits = 4, ...)
 {
