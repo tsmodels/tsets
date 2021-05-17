@@ -23,7 +23,10 @@ Not currently used
 }
 }
 \value{
-A printout of the parameter summary, model type and some model metrics.
+A printout of the parameter summary, model type and some model metrics. When
+estimated using autodiff, the standard errors, t-values and p-values
+will also be printed. In this case, if the parameters are close to their
+upper or lower bounds then it is very likely that these values will be NaN.
 }
 \author{
 Alexios Galanos
