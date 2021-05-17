@@ -1,3 +1,8 @@
+# 2021-05-17 v0.1.9 [AG]
+- autodiff (automatic differentiation) now an option in estimate method via 
+the tsetad package which provides a plugin estimation for use with tsets 
+(using the TMB package).
+
 # 2021-04-20 v0.1.9 [AG]
 - Missing values are now allowed and handled both on initialization as well
 as for the likelihood/estimation (which is estimated on the non missing values),

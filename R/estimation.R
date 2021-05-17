@@ -1,4 +1,4 @@
-estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace = 0), ...)
+estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace = 0), autodiff = FALSE, ...)
 {
   # create an environment for the soft barrier solver
   ets_env <- new.env(hash = TRUE)
@@ -34,56 +34,65 @@ estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace 
   tic <- Sys.time()
     # run solver
   setup$debug <- FALSE
-  if (solver == "nlminb") {
-    opt_res <- nlminb(start = pars, objective = lfun, lower = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"lower"],
-                      upper = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"upper"], setup = setup, 
-                      scale = 1/parscale, control = control)
-    pars <- opt_res$par
-    lik <- opt_res$objective
-    #
-    if (opt_res$convergence != 0) {
-      # try again
-      run_count <- 0
-      cont_ <- TRUE
-      while (cont_) {
-        run_count <- run_count + 1
-        opt_res <- nlminb(start = pars, objective = lfun, lower = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"lower"],
-                          upper = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"upper"], setup = setup, 
-                          scale = 1/parscale, control = control)
-        pars <- opt_res$par
-        lik <- opt_res$objective
-        if (opt_res$convergence == 0 || run_count > 19) {
-          cont_ <- FALSE
-        }
-      }
+  hess <- NULL
+  if (autodiff) {
+    opt_res <- estimate_ad(object, solver = solver, control = control, ...)
+    pars <- opt_res$pars
+    lik <- opt_res$llh
+    hess <- opt_res$hess
+    opt_res <- opt_res$solver_out
+  } else {
+    if (solver == "nlminb") {
+      opt_res <- nlminb(start = pars, objective = lfun, lower = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"lower"],
+                        upper = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"upper"], setup = setup, 
+                        scale = 1/parscale, control = control)
       pars <- opt_res$par
       lik <- opt_res$objective
+      #
+      if (opt_res$convergence != 0) {
+        # try again
+        run_count <- 0
+        cont_ <- TRUE
+        while (cont_) {
+          run_count <- run_count + 1
+          opt_res <- nlminb(start = pars, objective = lfun, lower = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"lower"],
+                            upper = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"upper"], setup = setup, 
+                            scale = 1/parscale, control = control)
+          pars <- opt_res$par
+          lik <- opt_res$objective
+          if (opt_res$convergence == 0 || run_count > 19) {
+            cont_ <- FALSE
+          }
+        }
+        pars <- opt_res$par
+        lik <- opt_res$objective
+      }
+      if (opt_res$convergence != 0) warnings("\nnlminb indicates non-successful convergence...")
+    } else if (solver == "solnp") {
+      opt_res <- solnp(pars = pars, fun = lfun, LB = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"lower"],
+                       UB = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"upper"], setup = setup, control = control)
+      pars <- opt_res$pars
+      lik <- opt_res$values[length(opt_res$values)]
+      if (opt_res$convergence != 0) warnings("\nsolnp indicates non successful convergence...")
+    } else if (solver == "optim") {
+      control$parscale <- parscale
+      mult_trend <- (setup$type == 2)
+      mult_seasonality <- (setup$type == 2) || (setup$type == 3) || (setup$type == 4)
+      setup$impose_bounds <- TRUE
+      inp_pars_trans <- pars_estim_pre_trans(pars,mult_trend,mult_seasonality, setup$parmatrix)
+      opt_res <- optim(par = inp_pars_trans, fn = lfun, setup = setup, method = "Nelder-Mead", control = control)
+      #
+      setup$impose_bounds <- FALSE
+      pars_inp <- pars_estim_inv_trans(opt_res$par,mult_trend,mult_seasonality, setup$parmatrix)
+      opt_res <- optim(par = pars_inp, fn = lfun, lower = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"lower"],
+                       upper = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"upper"], setup = setup,
+                       method = "L-BFGS-B", control = control, hessian = F)
+      pars <- opt_res$par
+      lik <- opt_res$value
+      if (opt_res$convergence != 0) warnings("\noptim indicates non-successful convergence...")
+    } else {
+      stop("\nsolver must be either solnp, nlminb or optim")
     }
-    if (opt_res$convergence != 0) warnings("\nnlminb indicates non-successful convergence...")
-  } else if (solver == "solnp") {
-    opt_res <- solnp(pars = pars, fun = lfun, LB = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"lower"],
-                     UB = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"upper"], setup = setup, control = control)
-    pars <- opt_res$pars
-    lik <- opt_res$values[length(opt_res$values)]
-    if (opt_res$convergence != 0) warnings("\nsolnp indicates non successful convergence...")
-  } else if (solver == "optim") {
-    control$parscale <- parscale
-    mult_trend <- (setup$type == 2)
-    mult_seasonality <- (setup$type == 2) || (setup$type == 3) || (setup$type == 4)
-    setup$impose_bounds <- TRUE
-    inp_pars_trans <- pars_estim_pre_trans(pars,mult_trend,mult_seasonality, setup$parmatrix)
-    opt_res <- optim(par = inp_pars_trans, fn = lfun, setup = setup, method = "Nelder-Mead", control = control)
-    #
-    setup$impose_bounds <- FALSE
-    pars_inp <- pars_estim_inv_trans(opt_res$par,mult_trend,mult_seasonality, setup$parmatrix)
-    opt_res <- optim(par = pars_inp, fn = lfun, lower = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"lower"],
-                     upper = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"upper"], setup = setup,
-                     method = "L-BFGS-B", control = control, hessian = F)
-    pars <- opt_res$par
-    lik <- opt_res$value
-    if (opt_res$convergence != 0) warnings("\noptim indicates non-successful convergence...")
-  } else {
-    stop("\nsolver must be either solnp, nlminb or optim")
   }
   if (object$target$scaler != 1 & object$model$type == 1) {
     pnames <- names(pars)
@@ -126,7 +135,7 @@ estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace 
   filt$setup <- setup
   filt$loglik <- lik
   opt_res$timing <- difftime(Sys.time(), tic, units = "mins")
-  obj <- list(model = filt, spec = object, opt = opt_res)
+  obj <- list(model = filt, spec = object, opt = opt_res, hess = hess)
   class(obj) <- c("tsets.estimate","tsmodel.estimate")
   return(obj)
 }

@@ -194,7 +194,16 @@ summary.tsets.estimate = function(object, digits = 4, ...)
   return(invisible(object))
 }
 
-
+.make_standard_errors <- function(object)
+{
+  pmatrix <- object$model$setup$parmatrix
+  pars <- pmatrix[which(pmatrix[,"estimate"] == 1),1]
+  H <- object$hess
+  se <- sqrt(diag(solve(H)))
+  tvalues <- pars/se
+  pvalues <- 2*(1 - pnorm(abs(tvalues)))
+  
+}
 .tables.tsets.estimate <- function(object, digits = 4, ...)
 {
   parmatrix <- object$model$setup$parmatrix

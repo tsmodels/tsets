@@ -3,7 +3,8 @@ auto_ets = function(y, xreg = NULL, lambda = NA, metric = "AIC", frequency = NUL
                    normalized_seasonality = TRUE, additive_only = FALSE, cores = NULL, 
                    solver = "nlminb", control = list(trace = 0, maxit = 1000), 
                    power_model = FALSE, include_damped = TRUE, 
-                   verbose = FALSE, retain = 1, scale = FALSE, seasonal_init = "fixed", ...)
+                   verbose = FALSE, retain = 1, scale = FALSE, 
+                   seasonal_init = "fixed", autodiff = FALSE, ...)
 {
   # sanity check of model input
   valid_criteria <- c("AIC","BIC","AICc","MAPE","MASE","MSLRE")
@@ -77,7 +78,7 @@ auto_ets = function(y, xreg = NULL, lambda = NA, metric = "AIC", frequency = NUL
       spec <- suppressWarnings(ets_modelspec(y, model = sgrid[i,'model'], lambda = lambda, damped = damped_option_i, power = power_option_i,
                                             xreg = xreg, frequency = frequency, normalized_seasonality = normalized_seasonality,
                                             scale = scale, seasonal.init = seasonal_init))
-      mod <- estimate(spec, solver = solver, control = control)
+      mod <- estimate(spec, solver = solver, control = control, autodiff = autodiff)
       return(mod)
     }
   } else {
@@ -103,7 +104,7 @@ auto_ets = function(y, xreg = NULL, lambda = NA, metric = "AIC", frequency = NUL
                                             damped = damped_option_i, power = power_option_i,
                                             xreg = xreg, frequency = frequency, normalized_seasonality = normalized_seasonality,
                                             scale = scale, seasonal_init = seasonal_init))
-      mod <- estimate(spec, solver = solver, control = control)
+      mod <- estimate(spec, solver = solver, control = control, autodiff = autodiff)
       return(mod)
     }
 

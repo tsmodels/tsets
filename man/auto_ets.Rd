@@ -11,7 +11,7 @@ auto_ets(y, xreg = NULL, lambda = NA, metric = "AIC", frequency = NULL,
 normalized_seasonality = TRUE, additive_only = FALSE, cores = NULL, 
 solver = "nlminb", control = list(trace = 0, maxit = 1000), 
 power_model = FALSE, include_damped = TRUE, verbose = FALSE, retain = 1, scale = FALSE, 
-seasonal_init = "fixed", ...)
+seasonal_init = "fixed", autodiff = FALSE, ...)
 }
 \arguments{
 \item{y}{
@@ -66,6 +66,9 @@ Optional scaling for additive models.
 \item{seasonal_init}{
 Whether the initial seasonal states are estimated or
 fixed (set to a backcast approximation).
+}
+\item{autodiff}{
+Whether to use automatic differentiation (see \code{\link{estimate.tsets.spec}}).
 }
 \item{\dots}{
 Not currently used.

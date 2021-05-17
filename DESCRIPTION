@@ -1,7 +1,7 @@
 Package: tsets
 Type: Package
 Title: Exponential Smoothing Models
-Version: 0.1.9
+Version: 0.2.0
 Authors@R: c(person("Alexios", "Galanos", role = c("aut", "cre"),
     email = "alexios@4dscape.com"),
     person("James","Nesbit",role="ctb",
@@ -14,7 +14,7 @@ License: GPL-2
 Depends: R (>= 3.5), Rcpp (>= 0.12.9), tsmethods
 SystemRequirements: C++11, GNU make
 LinkingTo: Rcpp (>= 0.12.9), RcppArmadillo
-Imports: methods, tsaux, zoo, xts, data.table, lubridate, rmarkdown, bookdown, Rsolnp, EnvStats, viridis, snow, foreach, doSNOW, doParallel, truncnorm, stlplus
+Imports: methods, tsaux, zoo, xts, data.table, lubridate, rmarkdown, bookdown, Rsolnp, EnvStats, viridis, snow, foreach, doSNOW, doParallel, truncnorm, stlplus, tsetsad
 Suggests: knitr, kableExtra
 Encoding: UTF-8
 LazyData: true
