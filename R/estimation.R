@@ -36,6 +36,10 @@ estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace 
   setup$debug <- FALSE
   hess <- NULL
   if (autodiff) {
+    if (!solver %in% c("nlminb","nloptr")) {
+      solver <- "nlminb"
+      warning("For auto_diff, only nlminb and nloptr allowed. Setting solver to nlminb.\n")
+    }
     opt_res <- estimate_ad(object, solver = solver, control = control, ...)
     pars <- opt_res$pars
     lik <- opt_res$llh
@@ -468,7 +472,7 @@ pars_estim_pre_trans <- function(pars, mult_trend, mult_season, parmatrix)
     if (mult_trend) {
       pars["beta"] <- gen_logit_trans(pars["beta"], parmatrix["beta","lower"], parmatrix["beta","upper"])
     } else {
-      if ("alpha" %in% pars_names) apar <- pars["alpha"] else apar <- parmatrix["alpha","init"]
+      apar <- parmatrix["alpha","init"]
       pars["beta"] <- gen_logit_trans(pars["beta"], 0, apar - 1e-6)
     }
   }
@@ -477,7 +481,7 @@ pars_estim_pre_trans <- function(pars, mult_trend, mult_season, parmatrix)
     if (mult_season) {
       pars["gamma"] <- gen_logit_trans(pars["gamma"], parmatrix["gamma","lower"], parmatrix["gamma","upper"])
     } else {
-      if ("alpha" %in% pars_names) apar <- pars["alpha"] else apar <- parmatrix["alpha","init"]
+      apar <- parmatrix["alpha","init"]
       pars["gamma"] <- gen_logit_trans(pars["gamma"], 0, 1 - apar - 1e-6)
     }
   }
@@ -500,7 +504,7 @@ pars_estim_inv_trans <- function(pars, mult_trend, mult_season, parmatrix)
     if (mult_trend) {
       pars["beta"] <- gen_inv_logit_trans(pars["beta"], parmatrix["beta","lower"], parmatrix["beta","upper"])
     } else {
-      if ("alpha" %in% pars_names) apar <- pars["alpha"] else apar <- parmatrix["alpha","init"]
+      apar <- parmatrix["alpha","init"]
       pars["beta"] <- gen_inv_logit_trans(pars["beta"], 0, apar)
     }
   }
@@ -509,7 +513,7 @@ pars_estim_inv_trans <- function(pars, mult_trend, mult_season, parmatrix)
     if (mult_season) {
       pars["gamma"] <- gen_inv_logit_trans(pars["gamma"], parmatrix["gamma","lower"], parmatrix["gamma","upper"])
     } else {
-      if ("alpha" %in% pars_names) apar <- pars["alpha"] else apar <- parmatrix["alpha","init"]
+      apar <- parmatrix["alpha","init"]
       pars["gamma"] <- gen_inv_logit_trans(pars["gamma"], 0, 1 - apar - 1e-6)
     }
   }

@@ -287,14 +287,14 @@ init_model = function(y, model = "AAA", damped = FALSE, power = FALSE, xreg = NU
     if (positive) {
       lower <- c(lower,0)
     } else {
-      lower <- c(lower,-Inf)
+      lower <- c(lower,-max(abs(y)) * 10)
     }
-    upper <- c(upper,Inf)
+    upper <- c(upper,max(abs(y)) * 10)
     doestimate <- c(doestimate,1)
     required <- c(required, 1)
   } else {
     lower <- c(lower,1e-12)
-    upper <- c(upper,Inf)
+    upper <- c(upper, max(abs(y)) * 10)
     doestimate <- c(doestimate,1)
     required <- c(required,1)
   }
@@ -311,22 +311,22 @@ init_model = function(y, model = "AAA", damped = FALSE, power = FALSE, xreg = NU
     } else {
       if (substr(model,1,1) == "A") {
         init <- c(init,0)
-        lower <- c(lower,-Inf)
-        upper <- c(upper,Inf)
+        lower <- c(lower, -max(abs(y)) * 5)
+        upper <- c(upper, max(abs(y)) * 5)
         doestimate <- c(doestimate,1)
         required <- c(required, 1)
       } else {
         init <- c(init,0)
         lower <- c(lower, 0)
-        upper <- c(upper,Inf)
+        upper <- c(upper, max(abs(y)) * 5)
         doestimate <- c(doestimate,1)
         required <- c(required, 1)
       }
     }
   } else {
     pars <- c(pars,"b0")
-    lower <- c(lower,-Inf)
-    upper <- c(upper, Inf)
+    lower <- c(lower, -max(abs(y)) * 5)
+    upper <- c(upper,  max(abs(y)) * 10)
     doestimate <- c(doestimate,0)
     required <- c(required, 0)
 
@@ -346,10 +346,10 @@ init_model = function(y, model = "AAA", damped = FALSE, power = FALSE, xreg = NU
     pars <- c(pars,paste0("s", 0:(frequency - 2)))
     if (substr(model,3,3) == "M") {
       lower <- c(lower, rep(0, frequency - 1))
-      upper <- c(upper, rep(Inf, frequency - 1))
+      upper <- c(upper, rep(-max(abs(y)) * 10, frequency - 1))
     } else {
-      lower <- c(lower, rep(-Inf, frequency - 1))
-      upper <- c(upper, rep( Inf, frequency - 1))
+      lower <- c(lower, rep(-max(abs(y)) * 10, frequency - 1))
+      upper <- c(upper, rep( max(abs(y)) * 10, frequency - 1))
     }
     if (frequency <= 52) {
       doestimate <- c(doestimate, rep(1,frequency - 1))
@@ -383,14 +383,14 @@ init_model = function(y, model = "AAA", damped = FALSE, power = FALSE, xreg = NU
     pars <- c(pars, paste0("rho",1:k))
     if (substr(model,2,2) == "M" | (substr(model,1,1) == "M" & substr(model,2,2) == "N")) {
       init <- c(init, rep(0,k))
-      lower <- c(lower,rep(-Inf,k))
-      upper <- c(upper,rep( Inf,k))
+      lower <- c(lower,rep(-max(abs(y)) * 20, k))
+      upper <- c(upper,rep( max(abs(y)) * 20,k))
       doestimate <- c(doestimate,rep(1,k))
       required <- c(required, rep(1,k))
     } else {
       init <- c(init, rep(0,k))
-      lower <- c(lower,rep(-Inf,k))
-      upper <- c(upper,rep(Inf,k))
+      lower <- c(lower,rep(-max(abs(y)) * 20, k))
+      upper <- c(upper,rep( max(abs(y)) * 20,k))
       doestimate <- c(doestimate,rep(1,k))
       required <- c(required, rep(1,k))
     }
@@ -399,14 +399,14 @@ init_model = function(y, model = "AAA", damped = FALSE, power = FALSE, xreg = NU
     pars <- c(pars, paste0("rho",1:k))
     if (substr(model,2,2) == "M") {
       init <- c(init, rep(0,k))
-      lower <- c(lower,rep(-Inf,k))
-      upper <- c(upper,rep(Inf,k))
+      lower <- c(lower,rep(-max(abs(y)) * 20, k))
+      upper <- c(upper,rep( max(abs(y)) * 20,k))
       doestimate <- c(doestimate,rep(0,k))
       required <- c(required, rep(0,k))
     } else {
       init <- c(init, rep(0,k))
-      lower <- c(lower,rep(-Inf,k))
-      upper <- c(upper,rep(Inf,k))
+      lower <- c(lower,rep(-max(abs(y)) * 20, k))
+      upper <- c(upper,rep( max(abs(y)) * 20,k))
       doestimate <- c(doestimate,rep(0,k))
       required <- c(required, rep(0,k))
     }
@@ -416,7 +416,7 @@ init_model = function(y, model = "AAA", damped = FALSE, power = FALSE, xreg = NU
   pars <- c(pars,"sigma")
   init <- c(init, 1)
   lower <- c(lower,1e-12)
-  upper <- c(upper,Inf)
+  upper <- c(upper, max(abs(y)) * 10)
   doestimate <- c(doestimate,0)
   required <- c(required, 0)
   parmatrix <- matrix(0, ncol = 6, nrow = length(pars))
