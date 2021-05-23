@@ -32,6 +32,7 @@ jobs:
           install.packages(c("remotes", "rcmdcheck", "devtools"))
           devtools::install_github("tsmodels/tsmethods")
           devtools::install_github("tsmodels/tsaux")
+          devtools::install_github("tsmodels/tsetsad")
           remotes::install_deps(dependencies = TRUE)
         shell: Rscript {0}
       - name: Check
