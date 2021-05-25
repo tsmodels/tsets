@@ -167,8 +167,10 @@ summary.tsets.estimate = function(object, digits = 4, ...)
   }
   printout <- data.frame("Parameter" = rownames(pmatrix), "Description" = pmatrix[,"."], "Est[Value]" = pmatrix[,1], check.names = FALSE)
   if (!is.null(object$hess)) {
-    S <- suppressWarnings(.make_standard_errors(object))
-    printout <- cbind(printout, S)
+    S <- try(suppressWarnings(.make_standard_errors(object)), silent = TRUE)
+    if(!inherits(S,'try-error')){
+      printout <- cbind(printout, S)
+    }
   }
   print(kable(printout, right = FALSE, digits = digits, row.names = FALSE, format = "simple"))
 
