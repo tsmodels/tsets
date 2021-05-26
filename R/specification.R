@@ -75,7 +75,7 @@ ets_modelspec <- function(y, model = "AAN", damped = FALSE, power = FALSE, xreg 
   }
 
   if (scale & model_type(model, power) == 1) {
-    scaler <- max(y)
+    scaler <- max(y, na.rm = TRUE)
     y <- y/scaler
   } else {
     scaler <- 1
