@@ -22,7 +22,7 @@ estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace 
     ix <- which(grepl("rho",names(pars)))
     xr <- setup$xreg
     yr <- setup$data
-    pscale <- sapply(1:length(ix), function(i) max(yr)/max(xr[,i]))
+    pscale <- sapply(1:length(ix), function(i) max(yr, na.rm = TRUE)/max(xr[,i]))
     if (any(!is.finite(pscale))) {
       pscale[which(!is.finite(pscale))] <- 1
     }

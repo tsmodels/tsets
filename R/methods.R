@@ -20,7 +20,7 @@ residuals.tsets.estimate <- function(object, raw = FALSE, h = 1, cores = 1, seed
         if (!is.null(object$spec$transform)) {
           out <- xts(object$spec$transform$transform(object$spec$target$y_orig, object$spec$transform$lambda) - object$model$filtered, object$spec$target$index)
         } else {
-          out <- xts(object$spec$target$y_orig - object$model$filtered)
+          out <- xts(object$spec$target$y_orig - object$model$filtered, object$spec$target$index)
         }
       } else {
         out <- xts(object$spec$target$y_orig/object$model$filtered - 1, object$spec$target$index)
