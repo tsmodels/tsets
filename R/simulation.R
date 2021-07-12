@@ -306,8 +306,13 @@ ets_sample <- function(model = "AAA", power = FALSE, damped = FALSE, h = 100, fr
       }
     }    
   } else {
-    s_vector <- rep(0, length(s_vector_names))
-    names(s_vector) <- s_vector_names
+    if (error_type == "Additive") {
+      s_vector <- rep(0, length(s_vector_names))
+      names(s_vector) <- s_vector_names
+    } else {
+      s_vector <- rep(1, length(s_vector_names))
+      names(s_vector) <- s_vector_names
+    }
   }
   
   p_matrix <- data.table("parameters" = c("l0","b0",s_vector_names,"alpha","beta","phi","gamma","delta","theta","sigma"), 
