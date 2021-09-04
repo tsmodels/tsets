@@ -1,5 +1,5 @@
 tsbacktest.tsets.spec <- function(object, start = floor(length(object$target$y_orig))/2, end = length(object$target$y_orig),
-                                  h = 1, alpha = NULL, cores = 1, data_name = "y", save_output = FALSE, 
+                                  h = 1, estimate_every = 1, FUN = NULL, alpha = NULL, cores = 1, data_name = "y", save_output = FALSE, 
                                   save_dir = "~/tmp/", solver = "nlminb", autodiff = FALSE, trace = FALSE, ...)
 {
     if (save_output) {
@@ -31,10 +31,16 @@ tsbacktest.tsets.spec <- function(object, start = floor(length(object$target$y_o
         xreg <- NULL
     }
     start_date <- index(data)[start]
+    end <- min(NROW(data), end)
     end_date <- index(data)[end - 1]
     seqdates <- index(data[paste0(start_date,"/", end_date)])
     elapsed_time <- function(idx, end_date, start_date) {
         min(h, which(end_date == idx) - which(start_date == idx))
+    }
+    if (estimate_every != 1) {
+        estimate_every <- max(1, as.integer(estimate_every))
+        ns <- length(seqdates)
+        seqdates <- seqdates[seq(1, ns, by = estimate_every)]
     }
     if (!is.null(alpha)) {
         if (any(alpha <= 0)) {
@@ -54,6 +60,7 @@ tsbacktest.tsets.spec <- function(object, start = floor(length(object$target$y_o
     i <- 1
     cl <- makeCluster(cores)
     registerDoSNOW(cl)
+    clusterExport(cl, "FUN", envir = environment())
     if (trace) {
         iterations <- length(seqdates)
         pb <- txtProgressBar(max = iterations, style = 3)
@@ -97,6 +104,16 @@ tsbacktest.tsets.spec <- function(object, start = floor(length(object$target$y_o
                           "forecast_dates" = as.character(index(ytest)), 
                           "forecast" = as.numeric(p$mean), "actual" = as.numeric(ytest))
         if (!is.null(quantiles)) out <- cbind(out, qp)
+        if (!is.null(FUN)) {
+            pd <- apply(p$distribution, 1, FUN)
+            funp <- data.table(estimation_date = seqdates[i], horizon = horizon[i], fun_P50 = median(pd), fun_actual = FUN(as.numeric(ytest)))
+            if (!is.null(quantiles)) {
+                qp <- matrix(quantile(pd, quantiles), nrow = 1)
+                colnames(qp) <- paste0("fun_P", round(quantiles*100,1))
+                funp <- cbind(funp, qp)
+            }
+            out <- merge(out, funp, by = c("estimation_date","horizon"), all = TRUE)
+        }
         return(out)
     }
     stopCluster(cl)

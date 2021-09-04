@@ -1,7 +1,10 @@
-# 2021-05-17 v0.1.9 [AG]
-- autodiff (automatic differentiation) now an option in estimate method via 
-the tsetad package which provides a plugin estimation for use with tsets 
-(using the TMB package).
+# 2021-09-03 v0.2.1 [AG]
+- Added option in tsbacktest to re-estimate the model every n periods expanding
+the default of re-estimating every 1 period.
+- Added option in tsbacktest to apply a custom function to each path draw (e.g.
+sum, max etc) since we may be interested in having the distribution of some
+statistic over the entire forecast horizon.
+- Rolled out changes similar to those applied in tsissm package.
 
 # 2021-04-20 v0.1.9 [AG]
 - Missing values are now allowed and handled both on initialization as well
