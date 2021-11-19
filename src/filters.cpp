@@ -70,7 +70,7 @@ Rcpp::List filter_mmm(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_, SEXP 
         const double S_m = S(i-1,m-1);
         const double mu = L(i-1) * std::pow(B(i-1), phi);
 
-        F(i) = mu * S_m + X(i);
+        F(i) = mu * S_m * (1.0 + X(i));
         if (good_values(i) == 1) {
             E(i) = (Y(i) - F(i))/F(i);
         } else {
@@ -292,7 +292,7 @@ Rcpp::List simulate_mmm(SEXP model_, SEXP e_, SEXP pars_, SEXP s0_, SEXP x_, arm
 
             const double a = (normseason == 1 && season == 1) ? 1 + (gamma/m)*S_m*E(i,j) : 1.0;
 
-            Y(i,j) = ( mu * S_m + X(j) ) * (1 + E(i,j));
+            Y(i,j) = ( mu * S_m * (1.0 + X(j)) ) * (1 + E(i,j));
             L(i,j) = ( mu * (1 + alpha * E(i,j)) ) * a;
 
             if (trend==1) {

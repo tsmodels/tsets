@@ -1,7 +1,7 @@
 ets_modelspec <- function(y, model = "AAN", damped = FALSE, power = FALSE, xreg = NULL, frequency = NULL,
                           lambda = NULL, normalized_seasonality = TRUE, fixed_pars = NULL, 
                           scale = FALSE, seasonal_init = "fixed", lambda_lower = 0, 
-                          lambda_upper = 1, sampling = NULL, ...)
+                          lambda_upper = 1, sampling = NULL, xreg_init = TRUE, ...)
 {
   # 1. Check y
   if  (!is.xts(y)) {
@@ -168,6 +168,14 @@ ets_modelspec <- function(y, model = "AAN", damped = FALSE, power = FALSE, xreg 
   spec$model$theta_type_model <- theta_type_model
   spec$model$seasonal_init <- seasonal_init
   class(spec) = c("tsets.spec","tsmodel.spec")
+  if (xreg_init) {
+    initx <- init_x(spec)
+    if (!is.null(initx)) {
+      spec$model$parmatrix[grepl("rho",rownames(spec$model$parmatrix)),"init"] <- unname(initx$pars)
+      spec$model$parmatrix[grepl("rho",rownames(spec$model$parmatrix)),"lower"] <- unname(initx$lower)
+      spec$model$parmatrix[grepl("rho",rownames(spec$model$parmatrix)),"upper"] <- unname(initx$upper)
+    }
+  }
   return(spec)
 }
 

@@ -382,9 +382,9 @@ init_model = function(y, model = "AAA", damped = FALSE, power = FALSE, xreg = NU
     k <- ncol(xreg)
     pars <- c(pars, paste0("rho",1:k))
     if (substr(model,2,2) == "M" | (substr(model,1,1) == "M" & substr(model,2,2) == "N")) {
-      init <- c(init, rep(0,k))
-      lower <- c(lower,rep(-max(abs(y), na.rm = T) * 20, k))
-      upper <- c(upper,rep( max(abs(y), na.rm = T) * 20,k))
+      init <- c(init, rep(1e-12,k))
+      lower <- c(lower,rep(-10, k))
+      upper <- c(upper,rep(10,k))
       doestimate <- c(doestimate,rep(1,k))
       required <- c(required, rep(1,k))
     } else {
@@ -399,8 +399,8 @@ init_model = function(y, model = "AAA", damped = FALSE, power = FALSE, xreg = NU
     pars <- c(pars, paste0("rho",1:k))
     if (substr(model,2,2) == "M") {
       init <- c(init, rep(0,k))
-      lower <- c(lower,rep(-max(abs(y), na.rm = T) * 20, k))
-      upper <- c(upper,rep( max(abs(y), na.rm = T) * 20,k))
+      lower <- c(lower,rep(0, k))
+      upper <- c(upper,rep(1,k))
       doestimate <- c(doestimate,rep(0,k))
       required <- c(required, rep(0,k))
     } else {
@@ -441,4 +441,37 @@ init_model = function(y, model = "AAA", damped = FALSE, power = FALSE, xreg = NU
   parmatrix[which(parmatrix[,"estimate"] == 0 & parmatrix[,"required"] == 0),"init"] <- init[which(parmatrix[,"estimate"] == 0 & parmatrix[,"required"] == 0)]
 
   return(parmatrix)
+}
+
+
+init_x <- function(object)
+{
+  # filter out level, seasonal then regress on residual
+  estimate_x <- object$model$parmatrix[grepl("rho", rownames(object$model$parmatrix)), "estimate", drop = FALSE]
+  estimate_x <- as.numeric(gsub("rho","",rownames(estimate_x)))
+  if (length(estimate_x) > 0) {
+    xreg <- object$xreg$xreg[,estimate_x, drop = FALSE]
+    if (object$model$type == "Additive" & substr(object$model$model,2,2) != "M") {
+      new_spec <- ets_modelspec(y = xts(object$target$y_orig, object$target$index), model = object$model$model, 
+                                damped = object$model$damped, power = object$model$power, 
+                                frequency = object$target$frequency, lambda = object$transform$lambda, 
+                                normalized_seasonality = object$model$normalized_seasonality, 
+                                scale = object$target$scaler, xreg_init = FALSE)
+      fit <- estimate(new_spec)
+      r <- residuals(fit, raw = TRUE)
+      z <- cbind(data.frame(r = as.numeric(r)), as.data.frame(xreg))
+      mod <- lm(r~0+., data = z)
+      xreg_init <- coef(mod)
+      v <- summary(mod)$coef[,2]
+      lower <- xreg_init - v
+      upper <- xreg_init + v
+    } else {
+      xreg_init <- 1
+      lower <- -1000
+      upper <- 1000
+    }
+    return(list(pars = xreg_init, lower = lower, upper  = upper))
+  } else {
+    return(NULL)
+  }
 }

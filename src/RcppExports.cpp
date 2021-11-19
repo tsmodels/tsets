@@ -6,6 +6,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // filter_aaa
 Rcpp::List filter_aaa(SEXP model_, SEXP y_, SEXP pars_, SEXP s0_, SEXP x_, SEXP good_);
 RcppExport SEXP _tsets_filter_aaa(SEXP model_SEXP, SEXP y_SEXP, SEXP pars_SEXP, SEXP s0_SEXP, SEXP x_SEXP, SEXP good_SEXP) {

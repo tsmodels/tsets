@@ -1,3 +1,12 @@
+# 2021-09-03 v0.2.2 [AG]
+# Changed the regressor type in the Multiplicative Error model (with non 
+additive Trend) to have multiplicative regressor formulated as (1 + 
+\beta \X). This is more consistent with this type of model rather than
+the previously included additive regressor.
+# Added an option to initialize the regressor coefficients for the Additive
+error model, with lower and upper bounds based on the pre-estimation standard
+deviation of the estimated coefficient.
+
 # 2021-09-03 v0.2.1 [AG]
 - Added option in tsbacktest to re-estimate the model every n periods expanding
 the default of re-estimating every 1 period.

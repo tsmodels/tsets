@@ -62,7 +62,7 @@ tsets_filter_mmm <- function(y, alpha, beta, gamma, phi = 1, l0, b0, s0, frequen
   err <- f <- rep(0, n + 1)
   y <- c(0, as.numeric(y))
   for (i in 2:(n + 1)) {
-    f[i] <- lmat[i - 1] * bmat[i - 1] * smat[i - 1, frequency] + x[i]
+    f[i] <- lmat[i - 1] * bmat[i - 1] * smat[i - 1, frequency] * (1 +  x[i])
     if (good[i] == 1) {
       err[i] <- (y[i] - f[i])/f[i]
     }

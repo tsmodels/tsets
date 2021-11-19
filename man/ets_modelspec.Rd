@@ -10,7 +10,7 @@ Specifies an ets model prior to estimation.
 ets_modelspec(y, model = "AAN", damped = FALSE, power = FALSE, xreg = NULL,
 frequency = NULL, lambda = NULL, normalized_seasonality = TRUE,
 fixed_pars = NULL, scale = FALSE, seasonal_init = "fixed", 
-lambda_lower = 0, lambda_upper = 1, sampling = NULL, ...)
+lambda_lower = 0, lambda_upper = 1, sampling = NULL, xreg_init = TRUE,...)
 }
 \arguments{
 \item{y}{
@@ -78,6 +78,10 @@ Upper bound on Box Cox lambda transformation.
 \item{sampling}{
 (Optional) sampling frequency of the dataset. If NULL, will try to identify from the timestamps of
 y. This is useful for plotting and extending the timestamps in the prediction horizon.
+}
+\item{xreg_init}{
+Whether to find initial estimates for the regressors with tigher lower and 
+upper bounds. This is only applicable for Additive error models.
 }
 \item{\dots}{
 Not currently used.

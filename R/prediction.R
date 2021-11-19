@@ -515,3 +515,138 @@ forecast_backtransform <- function(fcast_dist, transform)
   return(list(mean = mean.forecast, dist = f1))
 }
 
+analytic_moments.aaa <- function(mod, h = 1)
+{
+  m <- mod$spec$seasonal$frequency
+  l_n <- tail(mod$model$states, 1)[,"Level"]
+  alpha <- coef(mod)["alpha"]
+  if (mod$spec$model$include_trend == 1) {
+    b_n <- tail(mod$model$states, 1)[,"Trend"]
+    beta <- coef(mod)["beta"]
+  } else {
+    b_n <- 0
+    beta <- 0
+  }
+  if (mod$spec$model$include_damped == 1) {
+    phi <- coef(mod)["phi"]
+  } else {
+    phi <- 1
+  }
+  if (mod$spec$model$include_seasonal == 1) {
+    s_n <- rev(tail(mod$model$states, 1)[,grepl("S[0-9]",colnames(mod$model$states))])
+    gamma <- coef(mod)["gamma"]
+  } else {
+    s_n <- NULL
+    gamma <- 0
+  }
+  sigma <- sd(residuals(mod, raw = T))
+  hplus <- ( ((1:h) - 1) %% m ) + 1
+  mu <- rep(0, h)
+  v <- rep(0, h)
+  c <- rep(0, h)
+  for (i in 1:h) {
+    if (i %% m == 0) d <- 1 else d <- 0
+    c[i] <- alpha + beta*sum(phi^(1:i)) + gamma * d
+    mu[i] <- l_n + sum(phi^(1:i)) * b_n
+    if (!is.null(s_n)) {
+      mu[i] <- mu[i] + s_n[hplus[i]]
+    }
+    if (i == 1) {
+      v[i] <- sigma^2
+    } else {
+      v[i] <- sigma^2 * (1 + sum(c[1:(i - 1)]^2))
+    }
+  }
+  return(list(mu = mu, var = v, cj = c))
+}
+
+analytic_moments.mam <- function(mod, h = 1)
+{
+  m <- mod$spec$seasonal$frequency
+  l_n <- tail(mod$model$states, 1)[,"Level"]
+  alpha <- coef(mod)["alpha"]
+  if (mod$spec$model$include_trend == 1) {
+    b_n <- tail(mod$model$states, 1)[,"Trend"]
+    beta <- coef(mod)["beta"]
+  } else {
+    b_n <- 0
+    beta <- 0
+  }
+  if (mod$spec$model$include_damped == 1) {
+    phi <- coef(mod)["phi"]
+  } else {
+    phi <- 1
+  }
+  if (mod$spec$model$include_seasonal == 1) {
+    s_n <- rev(tail(mod$model$states, 1)[,grepl("S[0-9]",colnames(mod$model$states))])
+    gamma <- coef(mod)["gamma"]
+  } else {
+    s_n <- NULL
+    gamma <- 0
+  }
+  sigma <- sd(residuals(mod, raw = T))
+  hplus <- ( ((1:h) - 1) %% m ) + 1
+  mu <- rep(0, h)
+  v <- rep(0, h)
+  c <- rep(0, h)
+  for (i in 1:h) {
+    if (i %% m == 0) d <- 1 else d <- 0
+    c[i] <- alpha + beta*sum(phi^(1:i)) + gamma * d
+    mu[i] <- l_n + sum(phi^(1:i)) * b_n
+    if (!is.null(s_n)) {
+      mu[i] <- mu[i] + s_n[hplus[i]]
+    }
+    if (i == 1) {
+      v[i] <- sigma^2
+    } else {
+      v[i] <- (1+sigma^2) * (1 + sum(c[1:(i - 1)]^2))
+    }
+  }
+  return(list(mu = mu, var = v, cj = c))
+}
+
+analytic_moments.mmm <- function(mod, h = 1)
+{
+  m <- mod$spec$seasonal$frequency
+  l_n <- tail(mod$model$states, 1)[,"Level"]
+  alpha <- coef(mod)["alpha"]
+  if (mod$spec$model$include_trend == 1) {
+    b_n <- tail(mod$model$states, 1)[,"Trend"]
+    beta <- coef(mod)["beta"]
+  } else {
+    b_n <- 0
+    beta <- 0
+  }
+  if (mod$spec$model$include_damped == 1) {
+    phi <- coef(mod)["phi"]
+  } else {
+    phi <- 1
+  }
+  if (mod$spec$model$include_seasonal == 1) {
+    s_n <- rev(tail(mod$model$states, 1)[,grepl("S[0-9]",colnames(mod$model$states))])
+    gamma <- coef(mod)["gamma"]
+  } else {
+    s_n <- NULL
+    gamma <- 0
+  }
+  sigma <- sd(residuals(mod, raw = T))
+  hplus <- ( ((1:h) - 1) %% m ) + 1
+  mu <- rep(0, h)
+  v <- rep(0, h)
+  c <- rep(0, h)
+  for (i in 1:h) {
+    if (i %% m == 0) d <- 1 else d <- 0
+    c[i] <- alpha + beta*sum(phi^(1:i)) + gamma * d
+    mu[i] <- l_n + sum(phi^(1:i)) * b_n
+    if (!is.null(s_n)) {
+      mu[i] <- mu[i] + s_n[hplus[i]]
+    }
+    if (i == 1) {
+      v[i] <- sigma^2
+    } else {
+      v[i] <- sigma^2 * (1 + sum(c[1:(i - 1)]^2))
+    }
+  }
+  return(list(mu = mu, var = v, cj = c))
+}
+
