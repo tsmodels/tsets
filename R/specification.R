@@ -1,6 +1,6 @@
 ets_modelspec <- function(y, model = "AAN", damped = FALSE, power = FALSE, xreg = NULL, frequency = NULL,
-                          lambda = NULL, normalized_seasonality = TRUE, fixed_pars = NULL, 
-                          scale = FALSE, seasonal_init = "fixed", lambda_lower = 0, 
+                          lambda = NULL, normalized_seasonality = TRUE, fixed_pars = NULL,
+                          scale = FALSE, seasonal_init = "fixed", lambda_lower = 0,
                           lambda_upper = 1, sampling = NULL, xreg_init = TRUE, ...)
 {
   # 1. Check y
@@ -50,9 +50,11 @@ ets_modelspec <- function(y, model = "AAN", damped = FALSE, power = FALSE, xreg 
   } else{
     y_orig <- y
     if (!is.null(lambda)) {
+        if (is.na(lambda)) estimated <- TRUE else estimated <- FALSE
         transform <- box_cox(lambda = lambda, lower = lambda_lower, upper = lambda_upper)
         y <- transform$transform(y = y, frequency = frequency)
         transform$lambda <- attr(y, "lambda")
+        transform$estimated <- estimated
     } else{
       transform <- NULL
     }
@@ -63,7 +65,7 @@ ets_modelspec <- function(y, model = "AAN", damped = FALSE, power = FALSE, xreg 
   }
   spec <- list()
   spec$target$frequency <- frequency
-  
+
   if (is.null(sampling)) {
     sampling <- sampling_frequency(index(y))
   }

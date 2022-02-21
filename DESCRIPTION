@@ -1,7 +1,7 @@
 Package: tsets
 Type: Package
 Title: Exponential Smoothing Models
-Version: 0.2.2
+Version: 0.2.3
 Authors@R: c(person("Alexios", "Galanos", role = c("aut", "cre"),
     email = "alexios@4dscape.com"),
     person("James","Nesbit",role="ctb",

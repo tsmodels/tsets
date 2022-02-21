@@ -1,5 +1,5 @@
 tsbacktest.tsets.spec <- function(object, start = floor(length(object$target$y_orig))/2, end = length(object$target$y_orig),
-                                  h = 1, estimate_every = 1, FUN = NULL, alpha = NULL, cores = 1, data_name = "y", save_output = FALSE, 
+                                  h = 1, estimate_every = 1, FUN = NULL, alpha = NULL, cores = 1, data_name = "y", save_output = FALSE,
                                   save_dir = "~/tmp/", solver = "nlminb", autodiff = FALSE, trace = FALSE, ...)
 {
     if (save_output) {
@@ -19,7 +19,15 @@ tsbacktest.tsets.spec <- function(object, start = floor(length(object$target$y_o
         power <- FALSE
     }
     transform <- object$transform
-    lambda <- transform$lambda
+    if (!is.null(transform)) {
+        if (transform$estimated) {
+            lambda <- NA
+        } else {
+            lambda <- transform$lambda
+        }
+    } else {
+        lambda <- NULL
+    }
     normalized_seasonality <- object$model$normalized_seasonality
     frequency <- object$target$frequency
     seasonal_init <- object$model$seasonal_init
@@ -80,8 +88,8 @@ tsbacktest.tsets.spec <- function(object, start = floor(length(object$target$y_o
             xreg_train <- NULL
             xreg_test <- NULL
         }
-        spec <- ets_modelspec(ytrain, model = model, damped = damped, power = power, xreg = xreg_train, 
-                              frequency = frequency, transform = transform, 
+        spec <- ets_modelspec(ytrain, model = model, damped = damped, power = power, xreg = xreg_train,
+                              frequency = frequency, lambda = lambda,
                               normalized_seasonality = normalized_seasonality, seasonal_init = seasonal_init)
         mod <- estimate(spec, solver = solver, autodiff = autodiff)
         p <- predict(mod, h = horizon[i], newxreg = xreg_test, forc_dates = index(ytest))
@@ -98,10 +106,10 @@ tsbacktest.tsets.spec <- function(object, start = floor(length(object$target$y_o
             }
             colnames(qp) <- paste0("P", round(quantiles*100))
         }
-        out <- data.table("estimation_date" = rep(seqdates[i], horizon[i]), 
-                          "horizon" = 1:horizon[i], 
+        out <- data.table("estimation_date" = rep(seqdates[i], horizon[i]),
+                          "horizon" = 1:horizon[i],
                           "size" = rep(nrow(ytrain), horizon[i]),
-                          "forecast_dates" = as.character(index(ytest)), 
+                          "forecast_dates" = as.character(index(ytest)),
                           "forecast" = as.numeric(p$mean), "actual" = as.numeric(ytest))
         if (!is.null(quantiles)) out <- cbind(out, qp)
         if (!is.null(FUN)) {

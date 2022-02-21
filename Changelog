@@ -1,6 +1,12 @@
+# 2022-02-20 v0.2.3 [AG]
+# Fix to tsbacktest in passing lambda.
+# ets_modelspec now checks whether lambda is to be estimated and saves
+# the decision in the transform slot (knowing this determines whether lambda
+is to be estimated at each iteration of the backtest or kept fixed).
+
 # 2021-09-03 v0.2.2 [AG]
-# Changed the regressor type in the Multiplicative Error model (with non 
-additive Trend) to have multiplicative regressor formulated as (1 + 
+# Changed the regressor type in the Multiplicative Error model (with non
+additive Trend) to have multiplicative regressor formulated as (1 +
 \beta \X). This is more consistent with this type of model rather than
 the previously included additive regressor.
 # Added an option to initialize the regressor coefficients for the Additive
@@ -23,7 +29,7 @@ the states.
 - Update: all methods now corrected to work with missing values
 
 # 2021-04-07 v0.1.8 [AG]
-- Added power_model option in auto_ets with default of FALSE (power MAM models 
+- Added power_model option in auto_ets with default of FALSE (power MAM models
 should not be included as default as their properties still need more research)
 - Imported crps from tsaux and added to metrics method for predict object.
 - Added GNU make to SystemRequirements for the non portable Makevars
