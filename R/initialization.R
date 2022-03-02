@@ -105,7 +105,7 @@ init_states <- function(y, trend_type = "A", season_type = "M", frequency = 12){
       y_sa <- y - y_d$seasonal
     } else {
       # We do not want negative seasonal indexes
-      init_seas <- pmax(init_seas, 1e-2) 
+      init_seas <- pmax(init_seas, 1e-2)
       if (sum(init_seas) > frequency) {
         init_seas <- init_seas / sum(init_seas + 1e-2)
       }
@@ -189,7 +189,7 @@ init_model = function(y, model = "AAA", damped = FALSE, power = FALSE, xreg = NU
     doestimate <- c(doestimate,0)
     include_trend <- FALSE
     required <- c(required,0)
-    
+
     if (substr(model,2,2) == "M") {
       init <- c(init,0)
     } else {
@@ -425,8 +425,8 @@ init_model = function(y, model = "AAA", damped = FALSE, power = FALSE, xreg = NU
 
   # initialize to something
   parmatrix[,"init"] <- init
-  ipars <- init_pars(alpha = NULL, beta = NULL, gamma = NULL, phi = NULL, trend_type = substr(model,2,2), 
-                    season_type = substr(model,3,3), damped = damped, lower = c(0.2,0.1,0.1,0.5), upper = c(1,1,1,1), 
+  ipars <- init_pars(alpha = NULL, beta = NULL, gamma = NULL, phi = NULL, trend_type = substr(model,2,2),
+                    season_type = substr(model,3,3), damped = damped, lower = c(0.2,0.1,0.1,0.5), upper = c(1,1,1,1),
                     frequency = frequency)
 
   istart <- init_states(ts(as.numeric(y), frequency = frequency), substr(model,2,2), season_type = substr(model,3,3), frequency = frequency)
@@ -452,10 +452,12 @@ init_x <- function(object)
   if (length(estimate_x) > 0) {
     xreg <- object$xreg$xreg[,estimate_x, drop = FALSE]
     if (object$model$type == "Additive" & substr(object$model$model,2,2) != "M") {
-      new_spec <- ets_modelspec(y = xts(object$target$y_orig, object$target$index), model = object$model$model, 
-                                damped = object$model$damped, power = object$model$power, 
-                                frequency = object$target$frequency, lambda = object$transform$lambda, 
-                                normalized_seasonality = object$model$normalized_seasonality, 
+      new_spec <- ets_modelspec(y = xts(object$target$y_orig, object$target$index), model = object$model$model,
+                                damped = object$model$damped, power = object$model$power,
+                                frequency = object$target$frequency, transformation = object$transform$name,
+                                lambda = object$transform$lambda, lower = object$transform$lower,
+                                upper = object$transform$lower,
+                                normalized_seasonality = object$model$normalized_seasonality,
                                 scale = object$target$scaler, xreg_init = FALSE)
       fit <- estimate(new_spec)
       r <- residuals(fit, raw = TRUE)

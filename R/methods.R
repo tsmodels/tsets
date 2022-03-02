@@ -55,7 +55,7 @@ tsmetrics.tsets.predict = function(object, actual, alpha = 0.1, ...)
   m_crps <- crps(actual, object$distribution)
   data.frame("h" = n, "MAPE" = m_mape, "MASE" = m_mase, "MSLRE" = m_mslre, "BIAS" = m_bias, "MIS" = m_mis, "CRPS" = m_crps)
 }
-  
+
 tsmetrics.tsets.estimate = function(object, ...)
 {
   # residuals diagnostics
@@ -84,7 +84,7 @@ tsmetrics.tsets.estimate = function(object, ...)
   aic  <- ll + 2 * np
   bic  <- ll + log(ny) * np
   aicc <- aic + 2 * np * (np + 1) / (ny - np - 1)
-  data.frame("n" = ny, "no.pars" = np - 1, "LogLik" = lik, "AIC" = aic, "BIC" = bic, "AICc" = aicc, "MAPE" = m_mape, "MASE" = m_mase, 
+  data.frame("n" = ny, "no.pars" = np - 1, "LogLik" = lik, "AIC" = aic, "BIC" = bic, "AICc" = aicc, "MAPE" = m_mape, "MASE" = m_mase,
              "MSLRE" = m_mslre, "BIAS" = m_bias)
 }
 
@@ -175,12 +175,12 @@ summary.tsets.estimate = function(object, digits = 4, ...)
   print(kable(printout, right = FALSE, digits = digits, row.names = FALSE, format = "simple"))
 
   mtrcs <- tsmetrics(object)
-  print(kable(data.frame(LogLik = as.numeric(sprintf(mtrcs$LogLik,fmt = "%.4f")), 
+  print(kable(data.frame(LogLik = as.numeric(sprintf(mtrcs$LogLik,fmt = "%.4f")),
                          AIC = as.numeric(sprintf(mtrcs$AIC,fmt = "%.2f")),BIC = as.numeric(sprintf(mtrcs$BIC,fmt = "%.2f")),
                    AICc = as.numeric(sprintf(mtrcs$AICc,fmt = "%.2f"))), format = "simple",row.names = FALSE, right = FALSE))
   print(kable(data.frame(MAPE = as.numeric(sprintf(mtrcs$MAPE,fmt = "%.4f")), MASE = as.numeric(sprintf(mtrcs$MASE,fmt = "%.4f")),
                          MSLRE = as.numeric(sprintf(mtrcs$MSLRE,fmt = "%.4f")), BIAS = as.numeric(sprintf(mtrcs$BIAS,fmt = "%.4f"))), format = "simple",row.names = FALSE, right = FALSE))
-  
+
   if (!is.null(object$selection)) {
     cat("\nModel Ranking\n")
     cat("--------------\n")
@@ -345,27 +345,43 @@ tsdecompose.tsets.predict <- function(object, ...)
 
 tsspec.tsets.estimate <- function(object, y = NULL, lambda = NULL, xreg = NULL, ...)
 {
-  if (is.null(y)) {
-    y <- xts(object$spec$target$y.orig, object$spec$target$index)
-  }
-  if (!is.null(xreg)) {
-    xreg <- coredata(xreg)
-    if (nrow(xreg) != NROW(y)) stop("\nxreg should have the same number of rows as y")
-    if (ncol(xreg) > (NROW(y)/2)) warning("\nnumber of regressors greater than half the length of y!")
-  } else {
-    if (object$spec$xreg$include_xreg) {
-      xreg <- object$spec$xreg$xreg
-      if (nrow(xreg) != NROW(y)) stop("\nxreg should have the same number of rows as y")
-      if (ncol(xreg) > (NROW(y)/2)) warning("\nnumber of regressors greater than half the length of y!")
-    } else {
-      xreg <- NULL
+    if (is.null(y)) {
+        y <- xts(object$spec$target$y.orig, object$spec$target$index)
     }
-  }
-  if (is.null(lambda)) {
-    lambda <- object$spec$transform$lambda
-  }
-  spec <- ets_modelspec(y, model = object$spec$model$model, damped = object$spec$model$damped, power = object$spec$model$power, xreg = xreg, frequency = object$spec$target$frequency, 
-                lambda = lambda, normalized_seasonality = object$spec$model$normalized_seasonality, scale = attr(object$spec$target$scaler, "scale"), 
-                seasonal_init = object$spec$model$seasonal_init)
+    if (!is.null(xreg)) {
+        xreg <- coredata(xreg)
+        if (nrow(xreg) != NROW(y)) stop("\nxreg should have the same number of rows as y")
+        if (ncol(xreg) > (NROW(y)/2)) warning("\nnumber of regressors greater than half the length of y!")
+    } else {
+        if (object$spec$xreg$include_xreg) {
+        xreg <- object$spec$xreg$xreg
+        if (nrow(xreg) != NROW(y)) stop("\nxreg should have the same number of rows as y")
+        if (ncol(xreg) > (NROW(y)/2)) warning("\nnumber of regressors greater than half the length of y!")
+        } else {
+            xreg <- NULL
+        }
+    }
+    if (!is.null(object$spec$transform)) {
+        transformation <- object$spec$transform$name
+        lower <- object$spec$transform$lower
+        upper <- object$spec$transform$upper
+        if (is.null(lambda)) {
+            lambda <- object$spec$transform$lambda
+        }
+    } else {
+        transformation <- NULL
+        lower <- NULL
+        upper <- NULL
+        lambda <- NULL
+    }
+
+
+  spec <- ets_modelspec(y, model = object$spec$model$model, damped = object$spec$model$damped,
+                        power = object$spec$model$power, xreg = xreg,
+                        frequency = object$spec$target$frequency, transformation = transformation,
+                        lambda = lambda, lower = lower, upper = upper,
+                        normalized_seasonality = object$spec$model$normalized_seasonality,
+                        scale = attr(object$spec$target$scaler, "scale"),
+                        seasonal_init = object$spec$model$seasonal_init)
   return(spec)
 }

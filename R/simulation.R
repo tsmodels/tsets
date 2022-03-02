@@ -17,7 +17,7 @@ simulate.tsets.estimate  = function(object, nsim = 1, seed = NULL, h = NULL, new
     ipars[names(pars),"init"] <- pars[na.omit(match(rownames(ipars),names(pars)))]
     object$model$setup$parmatrix <- ipars
   }
-  
+
   if (object$spec$xreg$include_xreg == 1) {
     n_xreg <- ncol(object$spec$xreg$xreg)
     if (ncol(newxreg) != n_xreg) stop("\nnewxreg does not have the same number of regressors as used in the model.")
@@ -47,14 +47,14 @@ simulate.tsets.estimate  = function(object, nsim = 1, seed = NULL, h = NULL, new
     x <- matrix(rep(0, h), ncol = 1)
   }
   date_class <- attr(object$spec$target$sampling, "date_class")
-  
+
   x <- rbind(matrix(0, ncol = ncol(x), nrow = 1), x)
   custom_flag <- 0
   model <- c(object$model$setup$include_trend, object$model$setup$include_seasonal, h, frequency, object$model$setup$normalized_seasonality, nsim, custom_flag)
-  
-  sigma_res <- object$model$setup$parmatrix["sigma",1]  
+
+  sigma_res <- object$model$setup$parmatrix["sigma",1]
   type <- object$spec$model$type
-  
+
   if (bootstrap) {
     res <- as.numeric(na.omit(object$model$residuals))
     res <- res * sigma_scale
@@ -181,10 +181,11 @@ simulate.tsets.estimate  = function(object, nsim = 1, seed = NULL, h = NULL, new
 
 
 
-ets_sample <- function(model = "AAA", power = FALSE, damped = FALSE, h = 100, frequency = 12, start_date = as.Date("1990-01-01"), 
-                       alpha = 0.06, beta = 0.01, phi = 1, gamma = 0.01, delta = 1, theta = 1, 
-                       rho = NULL, xreg = NULL, normalized_seasonality = TRUE, sigma = 1, 
-                       lambda = NULL, seed_states = c("l0" = 1, "b0" = 0.05), innov = NULL, seed = NULL, sampling = "months")
+ets_sample <- function(model = "AAA", power = FALSE, damped = FALSE, h = 100, frequency = 12, start_date = as.Date("1990-01-01"),
+                       alpha = 0.06, beta = 0.01, phi = 1, gamma = 0.01, delta = 1, theta = 1,
+                       rho = NULL, xreg = NULL, normalized_seasonality = TRUE, sigma = 1,
+                       transformation = NULL, lambda = NULL, lower = 0, upper = 1,
+                       seed_states = c("l0" = 1, "b0" = 0.05), innov = NULL, seed = NULL, sampling = "months")
 {
   if (is.null(seed)) {
     RNGstate <- get(".Random.seed", envir = .GlobalEnv)
@@ -208,7 +209,7 @@ ets_sample <- function(model = "AAA", power = FALSE, damped = FALSE, h = 100, fr
   }
   s_dates <- future_dates(start = start_date, sampling, n = h)
   model <- match.arg(model, choices = c("AAA","AAN","ANN","ANA","MMM","MMN","MNM","MNN","MAM","MAN","Theta"), several.ok = FALSE)
-  
+
   if (model == "Theta") {
     theta_type_model <- TRUE
     model <- "AAN"
@@ -221,9 +222,9 @@ ets_sample <- function(model = "AAA", power = FALSE, damped = FALSE, h = 100, fr
   damped <- as.logical(damped[1])
   power  <- as.logical(power[1])
   normalized_seasonality <- as.logical(normalized_seasonality[1])
-  
+
   # check init_states
-  
+
   if (substr(model, 1, 1) == "A" & power) {
     warning("\npower model not available with additive error...setting to FALSE")
     power <- FALSE
@@ -251,7 +252,7 @@ ets_sample <- function(model = "AAA", power = FALSE, damped = FALSE, h = 100, fr
     frequency <- 4
   }
   s_vector_names <-  paste0("s",0:(frequency - 2))
-  
+
   if (!is.null(xreg)) {
     xreg <- coredata(xreg)
     if (nrow(xreg) != h) stop("\nxreg rows must equal h")
@@ -265,9 +266,9 @@ ets_sample <- function(model = "AAA", power = FALSE, damped = FALSE, h = 100, fr
     x <- matrix(0, ncol = 1, nrow = h)
   }
   x <- rbind(matrix(0, ncol = ncol(x), nrow = 1), x)
-  
+
   # check stability of coefficients
-  
+
   if (is.null(alpha[1])) alpha <- 0.06
   if (is.null(beta[1])) beta <- 0.01
   if (is.null(phi[1])) phi <- 1
@@ -283,7 +284,7 @@ ets_sample <- function(model = "AAA", power = FALSE, damped = FALSE, h = 100, fr
     b0 <- 0.5
   } else {
     b0 <- seed_states["b0"]
-    
+
   }
   if (is.null(sigma[1])) sigma <- l0 * 0.1
   if (include_seasonal) {
@@ -302,9 +303,9 @@ ets_sample <- function(model = "AAA", power = FALSE, damped = FALSE, h = 100, fr
         s_vector <- (s_vector %*% rnorm(ncol(s_vector), mean = 0.005 * l0, sd = 0.05 * l0))[1:length(s_vector_names),1]
         names(s_vector) <- s_vector_names
       } else {
-        
+
       }
-    }    
+    }
   } else {
     if (error_type == "Additive") {
       s_vector <- rep(0, length(s_vector_names))
@@ -314,10 +315,10 @@ ets_sample <- function(model = "AAA", power = FALSE, damped = FALSE, h = 100, fr
       names(s_vector) <- s_vector_names
     }
   }
-  
-  p_matrix <- data.table("parameters" = c("l0","b0",s_vector_names,"alpha","beta","phi","gamma","delta","theta","sigma"), 
+
+  p_matrix <- data.table("parameters" = c("l0","b0",s_vector_names,"alpha","beta","phi","gamma","delta","theta","sigma"),
                          values = c(seed_states["l0"],seed_states["b0"], s_vector, alpha[1], beta[1], phi[1], gamma[1], delta[1], theta[1], sigma[1]))
-  
+
   check_table <- check_parameters_simulation(p_matrix, model)
   if (any(!check_table$`>lb`) | any(!check_table$`<ub`) | any(!na.omit(check_table$condition_pass))) {
     warning("\nparameters violate stability conditions: ")
@@ -359,7 +360,7 @@ ets_sample <- function(model = "AAA", power = FALSE, damped = FALSE, h = 100, fr
     }
   }
   E <- cbind(matrix(0, nrow = 1, ncol = 1),  E)
-  
+
   # extract parameters
   parameters <- NULL
   alpha <- p_matrix[parameters == "alpha"]$values
@@ -408,9 +409,10 @@ ets_sample <- function(model = "AAA", power = FALSE, damped = FALSE, h = 100, fr
   E <- E[,-1]
   s_names <- c("Simulated","Level")
   if (type == 1) {
-    if (!is.null(lambda)) {
-      transform <- box_cox(lambda = lambda)
-      Y <- transform$inverse(Y, lambda = lambda)
+    if (!is.null(transformation)) {
+        if (transformation[1] == "box-cox" & is.na(lambda)) stop("\nlambda cannot be NA in simulation")
+        transform <- tstransform(transformation, lambda = lambda, lower = lower, upper = upper)
+        Y <- transform$inverse(Y, lambda = lambda)
     }
   }
   if (model[1] == 0) {
@@ -458,10 +460,10 @@ check_parameters_simulation <- function(pars, model) {
   ub_check <- cf[c("alpha","beta","gamma","phi","theta","delta")] <= 1
 
   if (error_type == "Additive") {
-    condition_table <- data.table(coef = c("alpha","beta","gamma","phi","theta","delta"), value = round(as.numeric(cf[c("alpha","beta","gamma","phi","theta","delta")]),4), 
+    condition_table <- data.table(coef = c("alpha","beta","gamma","phi","theta","delta"), value = round(as.numeric(cf[c("alpha","beta","gamma","phi","theta","delta")]),4),
                                   ">lb" = lb_check, "<ub" = ub_check, "condition" = c("NA"," < alpha"," < (1 - alpha)","NA","NA","NA"), "condition_pass" = c(NA, condition_slope, condition_seasonal,NA, NA, NA))
   } else {
-    condition_table <- data.table(coef = c("alpha","beta","gamma","phi","theta","delta"), value = c(round(as.numeric(cf[c("alpha","beta","gamma","phi","theta","delta")]),4)), 
+    condition_table <- data.table(coef = c("alpha","beta","gamma","phi","theta","delta"), value = c(round(as.numeric(cf[c("alpha","beta","gamma","phi","theta","delta")]),4)),
                                   ">lb" = c(lb_check), "<ub" = c(ub_check), "condition_pass" = TRUE)
   }
   return(condition_table)

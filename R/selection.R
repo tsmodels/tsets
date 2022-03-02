@@ -1,20 +1,19 @@
 # automatic model selection
-auto_ets = function(y, xreg = NULL, lambda = NA, metric = "AIC", frequency = NULL,
-                   normalized_seasonality = TRUE, additive_only = FALSE, cores = NULL, 
-                   solver = "nlminb", control = list(trace = 0, maxit = 1000), 
-                   power_model = FALSE, include_damped = TRUE, 
-                   verbose = FALSE, retain = 1, scale = FALSE, 
-                   seasonal_init = "fixed", autodiff = FALSE, ...)
+auto_ets = function(y, xreg = NULL, transformation = NULL, lambda = NULL, lower = 0, upper = 1,
+                    metric = "AIC", frequency = NULL, normalized_seasonality = TRUE,
+                    additive_only = FALSE, cores = NULL, solver = "nlminb",
+                    control = list(trace = 0, maxit = 1000), power_model = FALSE,
+                    include_damped = TRUE, verbose = FALSE, retain = 1,
+                    scale = FALSE, seasonal_init = "fixed", autodiff = FALSE, ...)
 {
   # sanity check of model input
   valid_criteria <- c("AIC","BIC","AICc","MAPE","MASE","MSLRE")
   if (!(metric %in% valid_criteria)) {
     stop("\nvalid criteria are AIC, BIC, AICc, MAPE, MASE and MSLRE")
   }
-  if (metric == "AIC" | metric == "BIC" | metric == "AICc") {
-    if (!is.null(lambda)) warning("\ninvalid selection metric when transform is not NULL (models will not be comparable)")
+  if ((metric == "AIC" | metric == "BIC" | metric == "AICc") && !additive_only) {
+    if (!is.null(transformation)) warning("\ninvalid selection metric when transformation is not NULL (models will not be comparable)")
   }
-
   if (any(y < 0, na.rm = T) && !additive_only) {
     warning("the data contains negative values; not suitable for multiplicative models!")
   }
@@ -28,14 +27,7 @@ auto_ets = function(y, xreg = NULL, lambda = NA, metric = "AIC", frequency = NUL
 
   sgrid <- data.frame(model = valid_models, power = 0, stringsAsFactors = FALSE)
 
-  # process additive and multiplicative models seperately
-  if (!is.null(lambda)) {
-    transform <- box_cox(lambda = NA)
-    y_t <- transform$transform(y, lambda = NA, frequency = frequency)
-    transform$lambda <- attr(y_t,"lambda")
-  } else {
-    transform <- NULL
-  }
+  # process additive and multiplicative models separately
   if (!additive_only & power_model) {
     sgrid[which(sgrid$model == "MAM")[2],"power"] <- 1
     sgrid[which(sgrid$model == "MAN")[2],"power"] <- 1
@@ -67,19 +59,20 @@ auto_ets = function(y, xreg = NULL, lambda = NA, metric = "AIC", frequency = NUL
     registerDoSEQ()
     v <- foreach(i = 1:ngrid, .packages = c("tsets","xts","tsaux")) %do% {
       # check if not additive
-      if (substr(sgrid[i,'model'],1,1) == "M") {
-        lambda <- NULL
-      } else {
-        lambda <- transform$lambda
-      }
-      damped_option_i <- as.logical(sgrid[i,"damped"])
-      power_option_i <- as.logical(sgrid[i,"power"])
-
-      spec <- suppressWarnings(ets_modelspec(y, model = sgrid[i,'model'], lambda = lambda, damped = damped_option_i, power = power_option_i,
-                                            xreg = xreg, frequency = frequency, normalized_seasonality = normalized_seasonality,
-                                            scale = scale, seasonal_init = seasonal_init))
-      mod <- estimate(spec, solver = solver, control = control, autodiff = autodiff)
-      return(mod)
+        if (substr(sgrid[i,'model'],1,1) == "M") {
+            lambda <- NULL
+            trm <- NULL
+        } else {
+            trm <- transformation[1]
+        }
+        damped_option_i <- as.logical(sgrid[i,"damped"])
+        power_option_i <- as.logical(sgrid[i,"power"])
+        spec <- suppressWarnings(ets_modelspec(y, model = sgrid[i,'model'], transformation = trm,
+                                               lambda = lambda, damped = damped_option_i, power = power_option_i,
+                                               xreg = xreg, frequency = frequency, normalized_seasonality = normalized_seasonality,
+                                               scale = scale, seasonal_init = seasonal_init, lower = lower, upper = upper))
+        mod <- estimate(spec, solver = solver, control = control, autodiff = autodiff)
+        return(mod)
     }
   } else {
     cl <- makeCluster(cores)
@@ -92,20 +85,20 @@ auto_ets = function(y, xreg = NULL, lambda = NA, metric = "AIC", frequency = NUL
       opts <- NULL
     }
     v <- foreach(i = 1:ngrid, .packages = c("tsets","xts","tsaux"), .options.snow = opts) %dopar% {
-      if (substr(sgrid[i,'model'],1,1) == "M") {
-        lambda <- NULL
-      } else {
-        lambda <- transform$lambda
-      }
-      damped_option_i <- as.logical(sgrid[i,"damped"])
-      power_option_i <- as.logical(sgrid[i,"power"])
-
-      spec <- suppressWarnings(ets_modelspec(y, model = sgrid[i,'model'], lambda =  lambda,
-                                            damped = damped_option_i, power = power_option_i,
-                                            xreg = xreg, frequency = frequency, normalized_seasonality = normalized_seasonality,
-                                            scale = scale, seasonal_init = seasonal_init))
-      mod <- estimate(spec, solver = solver, control = control, autodiff = autodiff)
-      return(mod)
+        if (substr(sgrid[i,'model'],1,1) == "M") {
+            lambda <- NULL
+            trm <- NULL
+        } else {
+            trm <- transformation[1]
+        }
+        damped_option_i <- as.logical(sgrid[i,"damped"])
+        power_option_i <- as.logical(sgrid[i,"power"])
+        spec <- suppressWarnings(ets_modelspec(y, model = sgrid[i,'model'], transformation = trm,
+                                               lambda =  lambda, damped = damped_option_i, power = power_option_i,
+                                               xreg = xreg, frequency = frequency, normalized_seasonality = normalized_seasonality,
+                                               scale = scale, seasonal_init = seasonal_init, lower = lower, upper = upper))
+        mod <- estimate(spec, solver = solver, control = control, autodiff = autodiff)
+        return(mod)
     }
 
     if (verbose) close(pb)

@@ -1,3 +1,11 @@
+# 2022-03-01 v0.2.4 [AG]
+# Added extra arguments to ets_modelspec to take a transformation. This now
+follows the added functionality in tsaux for wrapping all transformation in
+the tstransform function (currently box-cox and logit). Logit is for positively
+bounded series (usually 0-1 range such as probabilities) and follows the
+logit-normal distribution. This is a simpler assumption than using a beta
+distribution.
+
 # 2022-02-20 v0.2.3 [AG]
 # Fix to tsbacktest in passing lambda.
 # ets_modelspec now checks whether lambda is to be estimated and saves

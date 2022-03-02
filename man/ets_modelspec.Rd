@@ -8,9 +8,10 @@ Specifies an ets model prior to estimation.
 }
 \usage{
 ets_modelspec(y, model = "AAN", damped = FALSE, power = FALSE, xreg = NULL,
-frequency = NULL, lambda = NULL, normalized_seasonality = TRUE,
-fixed_pars = NULL, scale = FALSE, seasonal_init = "fixed", 
-lambda_lower = 0, lambda_upper = 1, sampling = NULL, xreg_init = TRUE,...)
+    frequency = NULL, transformation = "box-cox", lambda = NULL,
+    normalized_seasonality = TRUE, fixed_pars = NULL, scale = FALSE,
+    seasonal_init = "fixed", lower = 0, upper = 1, sampling = NULL,
+    xreg_init = TRUE, ...)
 }
 \arguments{
 \item{y}{
@@ -22,7 +23,7 @@ the type of error (E), the second letter the type of trend (T) and the third let
 the type of seasonality (S). A value of N denotes none. Models supported are
 \dQuote{AAA},\dQuote{AAN},\dQuote{ANN},\dQuote{ANA}, \dQuote{MMM},\dQuote{MMN},
 \dQuote{MNN},\dQuote{MNM}, \dQuote{MAM} and \dQuote{MAN}.
-In addition, one may set model equal to \dQuote{Theta}, which is equivalent 
+In addition, one may set model equal to \dQuote{Theta}, which is equivalent
 to a \dQuote{AAN} model with slope parameter (beta) fixed to zero.
 }
 \item{damped}{
@@ -37,9 +38,20 @@ An optional xts matrix of regressors (pre-lagged).
 \item{frequency}{
 The frequency of y (if using a seasonal model).
 }
+\item{transformation}{
+A valid transformation for y from the \dQuote{tstransform} function in the
+\dQuote{tsaux} package (current box-cox or logit are available) applied to
+additive models only.
+}
 \item{lambda}{
 The Box Cox power parameter (lambda). If NA will estimate this
 using the method of Guerrero.
+}
+\item{lower}{
+The lower bound for the transformation.
+}
+\item{upper}{
+The upper bound for the transformation.
 }
 \item{normalized_seasonality}{
 Whether to impose Roberts-McKenzie normalized seasonality.
@@ -69,18 +81,12 @@ in the optimization.
 Whether the initial seasonal states are estimated or
 fixed (set to a backcast approximation).
 }
-\item{lambda_lower}{
-Lower bound on Box Cox lambda transformation.
-}
-\item{lambda_upper}{
-Upper bound on Box Cox lambda transformation.
-}
 \item{sampling}{
 (Optional) sampling frequency of the dataset. If NULL, will try to identify from the timestamps of
 y. This is useful for plotting and extending the timestamps in the prediction horizon.
 }
 \item{xreg_init}{
-Whether to find initial estimates for the regressors with tigher lower and 
+Whether to find initial estimates for the regressors with tigher lower and
 upper bounds. This is only applicable for Additive error models.
 }
 \item{\dots}{

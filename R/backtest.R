@@ -20,12 +20,17 @@ tsbacktest.tsets.spec <- function(object, start = floor(length(object$target$y_o
     }
     transform <- object$transform
     if (!is.null(transform)) {
-        if (transform$estimated) {
-            lambda <- NA
+        if (transform$name == "box-cox") {
+            if (transform$estimated) {
+                lambda <- NA
+            } else {
+                lambda <- transform$lambda
+            }
         } else {
-            lambda <- transform$lambda
+            lambda <- NULL
         }
     } else {
+        transform <- list()
         lambda <- NULL
     }
     normalized_seasonality <- object$model$normalized_seasonality
@@ -89,7 +94,8 @@ tsbacktest.tsets.spec <- function(object, start = floor(length(object$target$y_o
             xreg_test <- NULL
         }
         spec <- ets_modelspec(ytrain, model = model, damped = damped, power = power, xreg = xreg_train,
-                              frequency = frequency, lambda = lambda,
+                              frequency = frequency, lambda = lambda, transformation = transform$name,
+                              lower = transform$lower, upper = transform$upper,
                               normalized_seasonality = normalized_seasonality, seasonal_init = seasonal_init)
         mod <- estimate(spec, solver = solver, autodiff = autodiff)
         p <- predict(mod, h = horizon[i], newxreg = xreg_test, forc_dates = index(ytest))

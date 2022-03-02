@@ -1,7 +1,7 @@
 ets_modelspec <- function(y, model = "AAN", damped = FALSE, power = FALSE, xreg = NULL, frequency = NULL,
-                          lambda = NULL, normalized_seasonality = TRUE, fixed_pars = NULL,
-                          scale = FALSE, seasonal_init = "fixed", lambda_lower = 0,
-                          lambda_upper = 1, sampling = NULL, xreg_init = TRUE, ...)
+                          transformation = "box-cox", lambda = NULL, normalized_seasonality = TRUE,
+                          fixed_pars = NULL, scale = FALSE, seasonal_init = "fixed", lower = 0,
+                          upper = 1, sampling = NULL, xreg_init = TRUE, ...)
 {
   # 1. Check y
   if  (!is.xts(y)) {
@@ -37,27 +37,43 @@ ets_modelspec <- function(y, model = "AAN", damped = FALSE, power = FALSE, xreg 
   xreg <- check_xreg(xreg, index(y))
   # 5. Check transformation
   y_orig <- y
-  if (!is.null(lambda)) {
-    if (!is.na(lambda) & lambda == 1) lambda <- NULL
+  if (!is.null(transformation)) {
+      if (!is.null(lambda) & transformation == "box-cox") {
+          if (!is.na(lambda) & lambda == 1) lambda <- NULL
+      } else if (transformation != "logit") {
+          lambda <- NULL
+      }
+      if (substr(model,1,1) == "M") {
+          if (!is.null(lambda) | !is.null(transformation)) {
+              warning("\nMultiplicative error model cannot use a Box Cox or logit transformation. Setting to NULL.")
+              transform <- NULL
+          } else{
+              transform <- NULL
+          }
+      } else {
+          y_orig <- y
+          if (!is.null(lambda) & transformation == "box-cox") {
+              if (is.na(lambda)) estimated <- TRUE else estimated <- FALSE
+              transform <- tstransform(method = transformation[1], lambda = lambda,
+                                       lower = lower, upper = upper)
+              y <- transform$transform(y = y, frequency = frequency)
+              transform$lambda <- attr(y, "lambda")
+              transform$estimated <- estimated
+          } else if (transformation == "logit") {
+              transform <- tstransform(method = transformation[1], lower = lower, upper = upper)
+              y <- transform$transform(y = y)
+              transform$estimated <- FALSE
+          } else {
+              transform <- NULL
+          }
+      }
+  } else {
+      transform <- NULL
   }
-  if (substr(model,1,1) == "M") {
-    if (!is.null(lambda)) {
-      warning("\nMultiplicative error model cannot use a Box Cox transformation (lambda). Setting to NULL.")
-      transform <- NULL
-    } else{
-      transform <- NULL
-    }
-  } else{
-    y_orig <- y
-    if (!is.null(lambda)) {
-        if (is.na(lambda)) estimated <- TRUE else estimated <- FALSE
-        transform <- box_cox(lambda = lambda, lower = lambda_lower, upper = lambda_upper)
-        y <- transform$transform(y = y, frequency = frequency)
-        transform$lambda <- attr(y, "lambda")
-        transform$estimated <- estimated
-    } else{
-      transform <- NULL
-    }
+  if (!is.null(transform)) {
+      transform$name <- transformation[1]
+      transform$lower <- lower
+      transform$upper <- upper
   }
   # 6. Check seasonality
   if (is.null(frequency) & substr(model,3,3) != "N") {
@@ -76,7 +92,7 @@ ets_modelspec <- function(y, model = "AAN", damped = FALSE, power = FALSE, xreg 
     scale <- FALSE
   }
 
-  if (scale & model_type(model, power) == 1) {
+  if (scale & model_type(model, power) == 1 & (!is.null(transform) && transformation == "box-cox")) {
     scaler <- max(y, na.rm = TRUE)
     y <- y/scaler
   } else {

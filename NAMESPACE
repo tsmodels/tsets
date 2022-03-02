@@ -14,7 +14,10 @@ importFrom("snow","makeCluster","stopCluster","clusterExport")
 importFrom("data.table","data.table","as.data.table","fwrite",".N","rbindlist","dcast")
 importFrom("viridis","viridis_pal")
 importFrom("doSNOW","registerDoSNOW")
-importFrom("tsaux","box_cox","tslinear","check_xreg","check_newxreg","do.call.fast","mape","mslre","mase","mis","bias","sampling_frequency","fourier_series","future_dates","crps")
+importFrom("tsaux","box_cox","tslinear","check_xreg","check_newxreg",
+           "do.call.fast","mape","mslre","mase","mis","bias",
+           "sampling_frequency","fourier_series","future_dates","crps",
+           "tstransform")
 importFrom("zoo","index","as.zoo","zoo","coredata","na.locf")
 importFrom("xts","xts","as.xts","is.xts","endpoints")
 importFrom("stlplus","stlplus")

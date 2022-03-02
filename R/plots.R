@@ -7,7 +7,7 @@ plot.tsets.estimate = function(x, y = NULL, ...)
   opar$cxy <- NULL
   opar$din <- NULL
   opar$page <- NULL
-  
+
   d <- tsdecompose(x)
   n <- 2
   if (!is.null(d$Slope))     n <- n + 1
@@ -28,7 +28,12 @@ plot.tsets.estimate = function(x, y = NULL, ...)
 
   if (!is.null(x$spec$transform)) {
     lambda <-  x$spec$transform$lambda
-    modelx <- paste0(modelx,"\n", "BoxCox","[lambda=",round(lambda,3),"]")
+    if (!is.null(lambda)) {
+        modelx <- paste0(modelx,"\n", x$spec$transform$name,"[lambda=",round(lambda,3),"]")
+    } else {
+        modelx <- paste0(modelx,"\n", x$spec$transform$name)
+
+    }
   }
   colx <- viridis_pal(option = "D", end = 0.8)(n - 1)
   layout_matrix <- matrix(1:n, nrow = n, ncol = 1)
