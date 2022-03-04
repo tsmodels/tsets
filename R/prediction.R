@@ -32,7 +32,7 @@ predict.tsets.estimate <- function(object, h = 12, newxreg = NULL, nsim = 1000, 
     }
   }
   if (!is.null(init_states)) {
-    if (length(as.vector(init_states) != NCOL(object$model$states))) {
+    if (length(as.vector(init_states)) != NCOL(object$model$states)) {
       stop(paste0("\ninit_states must be a vector of length ", NCOL(object$model$states)))
     } else {
       init_states <- matrix(as.numeric(init_states), nrow = 1, ncol = NCOL(object$model$states))
