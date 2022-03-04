@@ -5,6 +5,9 @@ the tstransform function (currently box-cox and logit). Logit is for positively
 bounded series (usually 0-1 range such as probabilities) and follows the
 logit-normal distribution. This is a simpler assumption than using a beta
 distribution.
+# Added init_states to the prediction method (similar to issm predict) to
+allow for prediction to be initialized from a different state vector rather
+than the last one.
 
 # 2022-02-20 v0.2.3 [AG]
 # Fix to tsbacktest in passing lambda.
