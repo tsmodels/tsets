@@ -1,6 +1,7 @@
 tsbacktest.tsets.spec <- function(object, start = floor(length(object$target$y_orig))/2, end = length(object$target$y_orig),
                                   h = 1, estimate_every = 1, FUN = NULL, alpha = NULL, cores = 1, data_name = "y", save_output = FALSE,
-                                  save_dir = "~/tmp/", solver = "nlminb", autodiff = FALSE, trace = FALSE, ...)
+                                  save_dir = "~/tmp/", solver = "nlminb", autodiff = FALSE, autoclean = FALSE,
+                                  trace = FALSE, ...)
 {
     if (save_output) {
         if (is.null(save_dir)) {
@@ -82,6 +83,7 @@ tsbacktest.tsets.spec <- function(object, start = floor(length(object$target$y_o
     } else {
         opts <- NULL
     }
+    extra_args <- list(...)
     b <- foreach(i = 1:length(seqdates), .packages = c("tsmethods","tsaux","xts","tsets","data.table"), .options.snow = opts, .combine = rbind) %dopar% {
         ytrain <- data[paste0("/", seqdates[i])]
         ix <- which(index(data) == seqdates[i])
@@ -92,6 +94,10 @@ tsbacktest.tsets.spec <- function(object, start = floor(length(object$target$y_o
         } else {
             xreg_train <- NULL
             xreg_test <- NULL
+        }
+        if (autoclean) {
+            args_x <- c(list(y = ytrain), list(frequency = frequency), list(lambda = lambda), extra_args)
+            ytrain <- do.call(auto_clean, args = args_x, quote = TRUE)
         }
         spec <- ets_modelspec(ytrain, model = model, damped = damped, power = power, xreg = xreg_train,
                               frequency = frequency, lambda = lambda, transformation = transform$name,

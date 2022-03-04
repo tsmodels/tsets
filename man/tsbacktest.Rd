@@ -8,10 +8,10 @@ Walk Forward Model Backtest
 Generates an expanding window walk forward backtest.
 }
 \usage{
-\method{tsbacktest}{tsets.spec}(object, start = floor(length(object$target$y_orig))/2, 
-end = length(object$target$y_orig), h = 1, estimate_every = 1, FUN = NULL, 
-alpha = NULL, cores = 1, data_name = "y", save_output = FALSE, 
-save_dir = "~/tmp/", solver = "nlminb", autodiff = FALSE, 
+\method{tsbacktest}{tsets.spec}(object, start = floor(length(object$target$y_orig))/2,
+end = length(object$target$y_orig), h = 1, estimate_every = 1, FUN = NULL,
+alpha = NULL, cores = 1, data_name = "y", save_output = FALSE,
+save_dir = "~/tmp/", solver = "nlminb", autodiff = FALSE, autoclean = FALSE,
 trace = FALSE, ...)
 }
 \arguments{
@@ -39,8 +39,8 @@ are generated (defaults to 1).
 An optional function which is applied across all horizons for each draw (i.e.
 operating on each row of the distribution which represents a single path). For
 example, using the max function will return the distribution of the maximum
-across all horizons, whereas sum (for flow variables) would represent the 
-aggregate value distribution. The P50 of this distribution is returns and 
+across all horizons, whereas sum (for flow variables) would represent the
+aggregate value distribution. The P50 of this distribution is returns and
 aligned with the terminal horizon for each re-estimation period, and if alpha
 is not NULL, then the quantiles of this distributions with respect to the alpha
 chosen.
@@ -73,18 +73,22 @@ The solver to use.
 Whether to use automatic differentiation for estimation. This makes use
 of the tsetsad package.
 }
+\item{autoclean}{
+Whether to perform automatic cleaning on the training data prior to prediction
+as per the \sQuote{auto_clean} function in the tsaux package.
+}
 \item{trace}{
 Whether to show the progress bar.
 }
 \item{\dots}{
-Not currently used
+Additional arguments passed to the \dQuote{auto_clean} function.
 }
 }
 \value{
 A list with the following data.tables:
 \itemize{
 \item prediction : the backtest table with forecasts and actuals
-\item metrics: a summary performance table showing metrics by 
+\item metrics: a summary performance table showing metrics by
 forecast horizon (MAPE, MSLRE, BIAS and MIS if alpha was not NULL).
 }
 }
