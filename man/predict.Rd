@@ -10,7 +10,8 @@ Prediction function for class \dQuote{tsets.estimate}.
 \usage{
 \method{predict}{tsets.estimate}(object, h = 12, newxreg = NULL,
 nsim = 1000, drop_na = TRUE, drop_negative = FALSE, redraw = TRUE,
-forc_dates = NULL, innov = NULL, custom_slope = NULL, init_states = NULL, ...)
+forc_dates = NULL, innov = NULL, custom_slope = NULL, init_states = NULL,
+innov_type = "q", sigma_scale = NULL, ...)
 }
 \arguments{
 \item{object}{
@@ -57,6 +58,15 @@ type models (i.e. no MA type).
 \item{init_states}{
 An optional vector of states to initialize the forecast. If NULL,
 will use the last available state from the estimated model.
+}
+\item{innov_type}{
+If \sQuote{innov} is not NULL, then this denotes the type of values passed,
+with \dQuote{q} denoting quantile probabilities (default and backwards
+compatible) and \dQuote{z} for standardized errors.
+}
+\item{sigma_scale}{
+A vector of length h denoting a scaling factor which is applied to rescale the
+standard deviation of each simulated horizon's distribution.
 }
 \item{\dots}{
 Not currently used
