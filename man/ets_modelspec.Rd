@@ -40,7 +40,7 @@ The frequency of y (if using a seasonal model).
 }
 \item{transformation}{
 A valid transformation for y from the \dQuote{tstransform} function in the
-\dQuote{tsaux} package (current box-cox or logit are available) applied to
+\dQuote{tsaux} package (currently box-cox or logit are available) applied to
 additive models only.
 }
 \item{lambda}{

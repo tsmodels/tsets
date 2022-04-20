@@ -7,13 +7,12 @@ importFrom("stats","pnorm","median","na.omit","fitted","coef","quantile","residu
            "decompose","lsfit","var","sigma","nlminb","logLik","spec.ar","na.pass", "pgamma", "qqline", "qqnorm","cov")
 importFrom("graphics","hist","grid", "legend", "lines", "par", "plot", "points","abline","axis", "axis.Date", "axis.POSIXct", "box", "polygon","layout","mtext")
 importFrom("grDevices", "gray","colorRampPalette","n2mfrow")
-importFrom("foreach","foreach","%do%","%dopar%","registerDoSEQ")
-importFrom("doParallel","registerDoParallel")
+importFrom("future.apply","future_lapply")
+importFrom("future","%<-%")
+importFrom("progressr", "handlers", "progressor")
 importFrom("knitr","kable")
-importFrom("snow","makeCluster","stopCluster","clusterExport")
 importFrom("data.table","data.table","as.data.table","fwrite",".N","rbindlist","dcast")
 importFrom("viridis","viridis_pal")
-importFrom("doSNOW","registerDoSNOW")
 importFrom("tsaux","box_cox","tslinear","check_xreg","check_newxreg",
            "do.call.fast","mape","mslre","mase","mis","bias",
            "sampling_frequency","fourier_series","future_dates","crps",
@@ -58,3 +57,4 @@ S3method("tsdiagnose","tsets.estimate")
 S3method("tsbenchmark","tsets.spec")
 S3method("tsprofile","tsets.estimate")
 S3method("tscalibrate","tsets.spec")
+S3method("tsmoments","tsets.estimate")

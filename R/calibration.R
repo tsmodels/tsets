@@ -1,8 +1,9 @@
 tscalibrate.tsets.spec <- function(object, start = floor(length(object$target$y_orig))/2, end = length(object$target$y_orig),
-                                   h = 1, nsim = 5000, cores = 1, solver = "nlminb", autodiff = FALSE,
+                                   h = 1, nsim = 5000, solver = "nlminb", autodiff = TRUE,
                                    autoclean = FALSE, trace = FALSE, ...)
 {
     if (object$model$type == 4) stop("\nno prediction calibration currently available for the power MAM model.")
+    if (object$model$class > 3) stop("\nno prediction calibration currently available for models of class 4 (MMM, MMN).")
     data <- xts(object$target$y_orig, object$target$index)
     model <- object$model$model
     damped <- object$model$damped
@@ -47,19 +48,12 @@ tscalibrate.tsets.spec <- function(object, start = floor(length(object$target$y_
     horizon <- sapply(1:length(seqdates), function(i){
         min(h, elapsed_time(index(data), index(data)[end], seqdates[i]))
     })
-    i <- 1
-    cl <- makeCluster(cores)
-    registerDoSNOW(cl)
-    if (trace) {
-        iterations <- length(seqdates)
-        pb <- txtProgressBar(max = iterations, style = 3)
-        progress <- function(n) setTxtProgressBar(pb, n)
-        opts <- list(progress = progress)
-    } else {
-        opts <- NULL
-    }
     extra_args <- list(...)
-    b <- foreach(i = 1:length(seqdates), .packages = c("tsmethods","tsaux","xts","tsets","data.table","bootstrap"), .options.snow = opts, .combine = rbind) %dopar% {
+    if (trace) {
+        prog_trace <- progressor(length(seqdates))
+    }
+    b %<-% future_lapply(1:length(seqdates), function(i) {
+        if (trace) prog_trace()
         ytrain <- data[paste0("/", seqdates[i])]
         ix <- which(index(data) == seqdates[i])
         ytest <- data[(ix + 1):(ix + horizon[i])]
@@ -88,10 +82,10 @@ tscalibrate.tsets.spec <- function(object, start = floor(length(object$target$y_
             dist <- do.call(cbind, lapply(1:ncol(p$distribution), function(j) mod$spec$transform$transform(p$distribution[,j], lambda = mod$spec$transform$lambda)))
             ac <- mod$spec$transform$transform(ytest, lambda = mod$spec$transform$lambda)
             er <- unname(as.numeric(ac - colMeans(dist)))
-            sigma_d <- sqrt(analytic_moments(mod, h = horizon[i])$var)
+            sigma_d <- sqrt(tsmoments(mod, h = horizon[i], newxreg = xreg_test)$var)
         } else {
             er <- as.numeric(ytest) - as.numeric(p$mean)
-            sigma_d <- sqrt(analytic_moments(mod, h = horizon[i])$var)
+            sigma_d <- sqrt(tsmoments(mod, h = horizon[i], newxreg = xreg_test)$var)
         }
         # output the calibration table for the binned quantiles
         out <- data.table("estimation_date" = rep(seqdates[i], horizon[i]),
@@ -104,11 +98,9 @@ tscalibrate.tsets.spec <- function(object, start = floor(length(object$target$y_
                           "sigma" = sigma_d)
         out <- cbind(out, qp)
         return(out)
-    }
-    stopCluster(cl)
-    if (trace) {
-        close(pb)
-    }
+    }, future.packages = c("tsmethods","tsaux","xts","tsets","data.table","bootstrap"), future.seed = TRUE)
+    b <- eval(b)
+    b <- rbindlist(b)
     error <- NULL
     bx <- b[,list(scaling = abs(error)/sigma, error = error), by = c("estimation_date","horizon")]
     bs <- b[,list(rel_scale = sigma[1]/sigma, horizon = horizon), by = c("estimation_date")]

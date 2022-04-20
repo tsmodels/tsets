@@ -346,7 +346,7 @@ init_model = function(y, model = "AAA", damped = FALSE, power = FALSE, xreg = NU
     pars <- c(pars,paste0("s", 0:(frequency - 2)))
     if (substr(model,3,3) == "M") {
       lower <- c(lower, rep(0, frequency - 1))
-      upper <- c(upper, rep(-max(abs(y), na.rm = T) * 10, frequency - 1))
+      upper <- c(upper, rep(2, frequency - 1))
     } else {
       lower <- c(lower, rep(-max(abs(y), na.rm = T) * 10, frequency - 1))
       upper <- c(upper, rep( max(abs(y), na.rm = T) * 10, frequency - 1))

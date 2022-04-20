@@ -9,21 +9,27 @@ Model Decomposition
 Decomposes the estimated model or prediction into its component parts.
 }
 \usage{
-\method{tsdecompose}{tsets.estimate}(object, ...)
-\method{tsdecompose}{tsets.predict}(object, ...)
+\method{tsdecompose}{tsets.estimate}(object, simplify = FALSE, ...)
+\method{tsdecompose}{tsets.predict}(object,  simplify = FALSE, ...)
 }
 \arguments{
 \item{object}{
 An object of class \dQuote{tsets.estimate} or \dQuote{tsets.predict}.
+}
+\item{simplify}{
+Whether to return the components as Trend (Level + Slope), Seasonal,
+X and Irregular.
 }
 \item{\dots}{
 Not currently used
 }
 }
 \value{
-For the estimated object, returns a list of xts vectors with the fitted and state components (including error).
-For the predicted object, a list with the simulated distribution matrix of the optional forecasted and state
-components which also inherits class \dQuote{tsmodel.distribution} (for pretty plotting functionality).
+For the estimated object, returns an xts matrix of with the fitted and
+state components (including error). For the predicted object, a list with the
+simulated object which includes the distribution matrix of the
+state components and their estimated valuesm, inheriting
+class \dQuote{tsmodel.predict} (for pretty plotting functionality).
 }
 \author{
 Alexios Galanos

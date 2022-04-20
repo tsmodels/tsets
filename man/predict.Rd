@@ -9,9 +9,8 @@ Prediction function for class \dQuote{tsets.estimate}.
 }
 \usage{
 \method{predict}{tsets.estimate}(object, h = 12, newxreg = NULL,
-nsim = 1000, drop_na = TRUE, drop_negative = FALSE, redraw = TRUE,
-forc_dates = NULL, innov = NULL, custom_slope = NULL, init_states = NULL,
-innov_type = "q", sigma_scale = NULL, ...)
+nsim = 1000, forc_dates = NULL, innov = NULL, custom_slope = NULL,
+init_states = NULL, innov_type = "q", sigma_scale = NULL, ...)
 }
 \arguments{
 \item{object}{
@@ -26,17 +25,6 @@ The matrix of external regressors in the forecast horizon.
 \item{nsim}{
 The number of simulations to use for generating the simulated
 predictive distribution.
-}
-\item{drop_na}{
-Drop any simulations that result in NA or NaN values.
-}
-\item{drop_negative}{
-Drop any simulations that result in negative values.
-}
-\item{redraw}{
-Whether to re-draw from the distribution if any NA, NaN or
-negative values resulted in a matrix with less than nsim
-simulations.
 }
 \item{forc_dates}{
 An optional vector of forecast dates equal to h. If NULL will

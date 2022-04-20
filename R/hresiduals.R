@@ -1,35 +1,24 @@
 # nstep ahead in-sample forecast error needed for calculating the h-step covariance matrix
-hresiduals.tsets.estimate <- function(object, h = 12, cores = 1, seed = NULL, trace = FALSE, raw = TRUE, ...)
+hresiduals.tsets.estimate <- function(object, h = 12, seed = NULL, trace = FALSE, raw = TRUE, ...)
 {
     n <- length(object$spec$target$y)
     hfun <- switch(object$spec$model$type,
-           "1" = tsets:::hresiduals_aaa_cpp,
-           "2" = tsets:::hresiduals_mmm_cpp,
-           "3" = tsets:::hresiduals_mam_cpp,
-           "4" = tsets:::hresiduals_powermam_cpp)
-    cl <- makeCluster(cores)
-    registerDoSNOW(cl)
+           "1" = hresiduals_aaa_cpp,
+           "2" = hresiduals_mmm_cpp,
+           "3" = hresiduals_mam_cpp,
+           "4" = hresiduals_powermam_cpp)
     if (trace) {
-        iterations <- n
-        pb <- txtProgressBar(max = iterations, style = 3)
-        progress <- function(n) setTxtProgressBar(pb, n)
-        opts <- list(progress = progress)
-    } else {
-        opts <- NULL
+        prog_trace <- progressor(n - 1)
     }
-    i <- 0
-    h_residuals <- foreach(i = 1:(n - 1), .packages = c("tsmethods","tsets","xts","data.table"), .options.snow = opts) %dopar% {
+    res %<-% future_lapply(1:(n - 1), function(i) {
+        if (trace) prog_trace()
         tmp <- hfun(object, h = h, nsim = 2000, start = i, seed = seed, raw = raw)
         return(tmp)
-    }
-    if (trace == 1) {
-        close(pb)
-    }
-    stopCluster(cl)
-    h_residuals <- rbindlist(h_residuals)
-    h_residuals <- dcast(h_residuals, date~horizon, value.var = "error")
-    # h_residuals <- na.omit(h_residuals)
-    return(h_residuals)
+    }, future.packages = c("tsmethods","tsets","xts","data.table"), future.seed = TRUE)
+    res <- eval(res)
+    res <- rbindlist(res)
+    res <- dcast(res, date~horizon, value.var = "error")
+    return(res)
 }
 
 
@@ -101,7 +90,7 @@ hresiduals_aaa_cpp <- function(object, h = 12, nsim = 1000, start = 1, seed = NU
 
 hresiduals_mmm_cpp <- function(object, h = 12, nsim = 1000, start = 1, seed = NULL, raw = TRUE, ...)
 {
-    
+
     if (is.null(seed)) {
         RNGstate <- get(".Random.seed", envir = .GlobalEnv)
     } else {
@@ -133,7 +122,7 @@ hresiduals_mmm_cpp <- function(object, h = 12, nsim = 1000, start = 1, seed = NU
     pars <- unname(as.numeric(pars))
     if (model[2] == 1) {
         s0 <- stateinit[1,paste0("S",0:(frequency - 1))]
-    } else{ 
+    } else{
         s0 <- rep(1, frequency)
     }
     s0 <- unname(as.numeric(s0))
@@ -192,7 +181,7 @@ hresiduals_mam_cpp <- function(object, h = 12, nsim = 1000, start = 1, seed = NU
     pars <- unname(as.numeric(pars))
     if (model[2] == 1) {
         s0 <- stateinit[1,paste0("S",0:(frequency - 1))]
-    } else{ 
+    } else{
         s0 <- rep(1, frequency)
     }
     s0 <- unname(as.numeric(s0))
@@ -254,7 +243,7 @@ hresiduals_powermam_cpp <- function(object, h = 12, nsim = 1000, start = 1, seed
     pars <- unname(as.numeric(pars))
     if (model[2] == 1) {
         s0 <- stateinit[1,paste0("S",0:(frequency - 1))]
-    } else{ 
+    } else{
         s0 <- rep(1, frequency)
     }
     s0 <- unname(as.numeric(s0))

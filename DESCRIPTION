@@ -1,7 +1,7 @@
 Package: tsets
 Type: Package
 Title: Exponential Smoothing Models
-Version: 0.2.5
+Version: 0.3.0
 Authors@R: c(person("Alexios", "Galanos", role = c("aut", "cre"),
     email = "alexios@4dscape.com"),
     person("James","Nesbit",role="ctb",
@@ -11,9 +11,9 @@ Authors@R: c(person("Alexios", "Galanos", role = c("aut", "cre"),
 Maintainer: alexios galanos <alexios@4dscape.com>
 Description: Exponential smoothing (ETS) models estimated using QML. Methods for estimation, prediction, simulation, inference and plotting.
 License: GPL-2
-Depends: R (>= 3.5), Rcpp (>= 0.12.9), tsmethods
+Depends: R (>= 3.5), Rcpp (>= 0.12.9), tsmethods (>= 0.3.0)
 SystemRequirements: C++11, GNU make
 LinkingTo: Rcpp (>= 0.12.9), RcppArmadillo
-Imports: methods, tsaux, zoo, xts, knitr, corpcor, data.table, lubridate, rmarkdown, bookdown, Rsolnp, ks, bootstrap, EnvStats, viridis, snow, foreach, doSNOW, doParallel, truncnorm, stlplus, tsetsad (>= 0.1.1)
+Imports: methods, tsaux, zoo, xts, knitr, corpcor, data.table, lubridate, rmarkdown, bookdown, Rsolnp, ks, bootstrap, EnvStats, viridis, future, future.apply, progressr, truncnorm, stlplus, tsetsad (>= 0.1.1)
 Suggests: kableExtra
 Encoding: UTF-8

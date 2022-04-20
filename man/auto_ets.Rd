@@ -9,10 +9,10 @@ Automatic model selection based on choice of criteria.
 \usage{
 auto_ets(y, xreg = NULL, transformation = NULL, lambda = NULL,
     lower = 0, upper = 1, metric = "AIC", frequency = NULL, normalized_seasonality = TRUE,
-    additive_only = FALSE, cores = NULL, solver = "nlminb", control = list(trace = 0,
+    additive_only = FALSE, solver = "nlminb", control = list(trace = 0,
         maxit = 1000), power_model = FALSE, include_damped = TRUE,
-    verbose = FALSE, retain = 1, scale = FALSE, seasonal_init = "fixed",
-    autodiff = FALSE, ...)
+    trace = FALSE, return_table = FALSE, scale = FALSE, seasonal_init = "fixed",
+    autodiff = TRUE, ...)
 }
 \arguments{
 \item{y}{
@@ -51,9 +51,6 @@ Whether to impose Roberts-McKenzie normalized seasonality.
 \item{additive_only}{
 Whether to limit to additive models only.
 }
-\item{cores}{
-The number of cores to use for parallel evaluation.
-}
 \item{solver}{
 The solver to use for estimation.
 }
@@ -66,10 +63,14 @@ Wether to include the power MAM models.
 \item{include_damped}{
 Whether to include damped models in the selection.
 }
-\item{verbose}{
-Whether to generate verbose output.
+\item{trace}{
+Whether to show the progress bar. The user is expected to have set up
+appropriate handlers for this using the \dQuote{progressr} package.
 }
-\item{retain}{
+\item{return_table}{
+Whether to return the table with the enumerated options, ranked by metric,
+for each combination of those options used.
+
 The models to retain (ranked by metric).
 }
 \item{scale}{
@@ -94,6 +95,10 @@ with and without a power term (for MAM and MAN models).
 \value{
 An object of class \dQuote{tsets.estimate} which also inherits
 class \dQuote{tsets.select}
+}
+\note{
+The function can use parallel functionality as long as the user has set up a
+\code{\link[future]{plan}} using the future package.
 }
 \author{
 Alexios Galanos

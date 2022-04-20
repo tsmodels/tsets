@@ -18,7 +18,7 @@ ets_modelspec <- function(y, model = "AAN", damped = FALSE, power = FALSE, xreg 
   } else{
     theta_type_model <- FALSE
   }
-
+  model_cl <- model_class(model)
   # 3. Validate model inputs
   damped <- as.logical(damped[1])
   power  <- as.logical(power[1])
@@ -44,11 +44,15 @@ ets_modelspec <- function(y, model = "AAN", damped = FALSE, power = FALSE, xreg 
           lambda <- NULL
       }
       if (substr(model,1,1) == "M") {
-          if (!is.null(lambda) | !is.null(transformation)) {
+          if (!is.null(lambda) & !is.null(transformation)) {
               warning("\nMultiplicative error model cannot use a Box Cox or logit transformation. Setting to NULL.")
+              transformation <- NULL
               transform <- NULL
-          } else{
-              transform <- NULL
+              lambda <- NULL
+          } else {
+            transformation <- NULL
+            transform <- NULL
+            lambda <- NULL
           }
       } else {
           y_orig <- y
@@ -102,6 +106,7 @@ ets_modelspec <- function(y, model = "AAN", damped = FALSE, power = FALSE, xreg 
 
   spec$model$model <- validate_model(model)
   spec$model$type <- model_type(model, power)
+  spec$model$class <- model_cl
   spec$model$damped <- as.logical(damped)
   spec$model$include_trend <- ifelse(substr(model,2,2) != "N", 1, 0)
   spec$model$include_seasonal <- ifelse(substr(model,3,3) != "N", 1, 0)
@@ -222,4 +227,17 @@ check_fixed <- function(pars, fixed_pars)
     }
   }
   return(pars)
+}
+
+
+model_class <- function(model)
+{
+  x <- rbind(
+    data.frame(class = 1, models = c("ANN","ANA","AAN","AAA")),
+    data.frame(class = 2, models = c("MNN","MNA","MAN","MAA")),
+    data.frame(class = 3, models =  c("MNM","MAM")),
+    data.frame(class = 4, models = c("MMN","MMM")),
+    data.frame(class = 5, models = c("MMA","ANM","AMN","AAM","AMA","AMM")))
+  modelc <- x[which(x$models == model),]$class
+  return(modelc)
 }

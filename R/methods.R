@@ -10,10 +10,10 @@ fitted.tsets.estimate <- function(object, ...)
   return(out)
 }
 
-residuals.tsets.estimate <- function(object, raw = FALSE, h = 1, cores = 1, seed = NULL, trace = FALSE, ...)
+residuals.tsets.estimate <- function(object, raw = FALSE, h = 1, seed = NULL, trace = FALSE, ...)
 {
   if (h > 1) {
-    out <- hresiduals.tsets.estimate(object, h = h, cores = cores, seed = seed, trace = trace, raw = raw, ...)
+    out <- hresiduals.tsets.estimate(object, h = h, seed = seed, trace = trace, raw = raw, ...)
   } else{
     if (raw) {
       if (object$spec$model$error == "Additive") {
@@ -168,7 +168,7 @@ summary.tsets.estimate = function(object, digits = 4, ...)
   printout <- data.frame("Parameter" = rownames(pmatrix), "Description" = pmatrix[,"."], "Est[Value]" = pmatrix[,1], check.names = FALSE)
   if (!is.null(object$hess)) {
     S <- try(suppressWarnings(.make_standard_errors(object)), silent = TRUE)
-    if(!inherits(S,'try-error')){
+    if (!inherits(S,'try-error')) {
       printout <- cbind(printout, S)
     }
   }
@@ -295,22 +295,29 @@ tsreport.tsets.estimate <- function(object, output_dir = "/", args = list(name =
 }
 
 
-tsdecompose.tsets.estimate <- function(object, ...)
+tsdecompose.tsets.estimate <- function(object, simplify = FALSE, ...)
 {
   d <- object$spec$target$index
   f <- fitted(object)
   # level and slope
-  Level <- xts(object$model$states[-1,"Level"],d)
+  idx <- 1:(nrow(object$model$states) - 1)
+  Level <- xts(object$model$states[idx,"Level"],d)
   colnames(Level) <- "Level"
+  if (simplify) {
+    Trend <- Level
+  }
   if (object$spec$model$include_trend == 1) {
-    Slope <- xts(object$model$states[-1,"Trend"],d)
+    Slope <- xts(object$model$states[idx,"Trend"],d)
     colnames(Slope) <- "Slope"
+    if (simplify) {
+      Trend <- Trend + Slope
+    }
   } else {
     Slope <- NULL
   }
   # seasonal
   if (object$spec$model$include_seasonal == 1) {
-    Seasonal <- xts(object$model$states[-1,paste0("S",object$spec$seasonal$frequency - 1)],d)
+    Seasonal <- xts(object$model$states[idx, paste0("S",object$spec$seasonal$frequency - 1)],d)
     colnames(Seasonal) <- "Seasonal"
   } else {
     Seasonal <- NULL
@@ -329,17 +336,42 @@ tsdecompose.tsets.estimate <- function(object, ...)
   # residuals
   e <- xts(object$model$residuals, d)
   colnames(e) <- "Residuals"
-
-  return(list(fitted = f, error = e, Level = Level, Slope = Slope, Seasonal = Seasonal, X = X))
+  if (simplify) {
+    Irregular <- e
+    colnames(Irregular) <- "Irregular"
+  }
+  if (simplify) {
+    return(list(fitted = f, Trend = Trend, Seasonal = Seasonal, X = X, Irregular = Irregular))
+  } else {
+    return(list(fitted = f, error = e, Level = Level, Slope = Slope, Seasonal = Seasonal, X = X))
+  }
 }
 
-tsdecompose.tsets.predict <- function(object, ...)
+tsdecompose.tsets.predict <- function(object, simplify = FALSE, ...)
 {
-  d <- object$decomposition
-  f <- object$distribution
-  d$forecast <- f
-  d$mean <- object$mean
-  return(d)
+  if (simplify) {
+    d <- object$decomposition
+    cnames <- names(d)
+    Trend <- d$Level
+    if (any(cnames %in% "Slope")) {
+      Trend$distribution <- Trend$distribution + d$Slope$distribution
+      Trend$original_series <- Trend$original_series + d$Slope$original_series
+    }
+    if (any(cnames %in% "Seasonal")) {
+      Seasonal <- d$Seasonal
+    } else {
+      Seasonal <- NULL
+    }
+    if (any(cnames %in% "X")) {
+      X <- d$X
+    } else {
+      X <- NULL
+    }
+    Irregular <- d$Error
+    d <- list(Trend = Trend, Seasonal = Seasonal, X = X, Irregular = Irregular)
+  } else {
+    return(d)
+  }
 }
 
 

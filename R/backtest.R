@@ -1,5 +1,5 @@
 tsbacktest.tsets.spec <- function(object, start = floor(length(object$target$y_orig))/2, end = length(object$target$y_orig),
-                                  h = 1, estimate_every = 1, FUN = NULL, alpha = NULL, cores = 1, data_name = "y", save_output = FALSE,
+                                  h = 1, estimate_every = 1, FUN = NULL, alpha = NULL, data_name = "y", save_output = FALSE,
                                   save_dir = "~/tmp/", solver = "nlminb", autodiff = FALSE, autoclean = FALSE,
                                   trace = FALSE, ...)
 {
@@ -71,20 +71,12 @@ tsbacktest.tsets.spec <- function(object, start = floor(length(object$target$y_o
     horizon <- sapply(1:length(seqdates), function(i){
         min(h, elapsed_time(index(data), index(data)[end], seqdates[i]))
     })
-    i <- 1
-    cl <- makeCluster(cores)
-    registerDoSNOW(cl)
-    clusterExport(cl, "FUN", envir = environment())
     if (trace) {
-        iterations <- length(seqdates)
-        pb <- txtProgressBar(max = iterations, style = 3)
-        progress <- function(n) setTxtProgressBar(pb, n)
-        opts <- list(progress = progress)
-    } else {
-        opts <- NULL
+        prog_trace <- progressor(length(seqdates))
     }
     extra_args <- list(...)
-    b <- foreach(i = 1:length(seqdates), .packages = c("tsmethods","tsaux","xts","tsets","data.table"), .options.snow = opts, .combine = rbind) %dopar% {
+    b %<-% future_lapply(1:length(seqdates), function(i) {
+        if (trace) prog_trace()
         ytrain <- data[paste0("/", seqdates[i])]
         ix <- which(index(data) == seqdates[i])
         ytest <- data[(ix + 1):(ix + horizon[i])]
@@ -135,11 +127,9 @@ tsbacktest.tsets.spec <- function(object, start = floor(length(object$target$y_o
             out <- merge(out, funp, by = c("estimation_date","horizon"), all = TRUE)
         }
         return(out)
-    }
-    stopCluster(cl)
-    if (trace) {
-        close(pb)
-    }
+    }, future.packages = c("tsmethods","tsaux","xts","tsets","data.table"), future.seed = TRUE)
+    b <- eval(b)
+    b <- rbindlist(b)
     if (is.null(data_name)) data_name <- "y"
     actual <- NULL
     forecast <- NULL

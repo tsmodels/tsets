@@ -1,5 +1,5 @@
-predict.tsets.estimate <- function(object, h = 12, newxreg = NULL, nsim = 1000, drop_na = TRUE, drop_negative = FALSE, redraw = TRUE, forc_dates = NULL,
-                                   innov = NULL, custom_slope = NULL, init_states = NULL, innov_type = "q", sigma_scale = NULL, ...)
+predict.tsets.estimate <- function(object, h = 12, newxreg = NULL, nsim = 1000, forc_dates = NULL, innov = NULL, custom_slope = NULL,
+                                   init_states = NULL, innov_type = "q", sigma_scale = NULL, ...)
 {
   if (!is.null(forc_dates)) {
     if (h != length(forc_dates)) stop("\nforc_dates must have length equal to h")
@@ -65,16 +65,7 @@ predict.tsets.estimate <- function(object, h = 12, newxreg = NULL, nsim = 1000, 
   zList <- forecast_simulation(object = object, newxreg = newxreg, h = h, nsim = nsim, forc_dates = forc_dates, innov = innov,
                                custom_slope = custom_slope, init_states = init_states,
                                innov_type = innov_type, sigma_scale = sigma_scale, ...)
-  # check for bad values in the forecast distribution and resimulate (if necessary)
-  if (is.null(innov)) {
-    fcast_dist <- forecast_sanitycheck(zList$distribution, h, nsim, drop_na, drop_negative)
-    if (redraw && (nrow(fcast_dist) < nsim)) {
-      fcast_dist <- forecast_simulation_redraw(object, fcast_dist, newxreg, h, nsim, drop_na, drop_negative, forc_dates = forc_dates, innov = innov, init_states = init_states,
-                                               innov_type = innov_type, sigma_scale = sigma_scale, ...)
-    }
-  } else {
-    fcast_dist <- zList$distribution
-  }
+  fcast_dist <- zList$distribution
   tmp <- forecast_backtransform(fcast_dist, object$spec$transform)
   fcast_mean <- zoo(tmp$mean, forc_dates)
   fcast_dist <- tmp$dist
@@ -170,11 +161,13 @@ forecast_aaa_cpp <- function(object, newxreg = NULL, h = 12, nsim = 1000, forc_d
     Y <- sweep(Y, 2, sigma_scale, "*")
     Y <- sweep(Y, 2, mu, "+")
   }
-  Level <- out$Level[,-1,drop = FALSE]
-  Slope <- out$Slope[,-1,drop = FALSE]
+  Level <- out$Level
+  Level <- Level[,1:(ncol(Level) - 1), drop = FALSE]
+  Slope <- out$Slope
+  Slope <- Slope[,1:(ncol(Slope) - 1), drop = FALSE]
   Seasonal <- out$Seasonal
   Seasonal <- t(Seasonal[,frequency,])
-  Seasonal <- Seasonal[,-1,drop = FALSE]
+  Seasonal <- Seasonal[,1:(ncol(Seasonal) - 1), drop = FALSE]
   xregf <- xregf[-1]
   E <- E[,-1,drop = FALSE]
   zList <- wrap_forecast_output(object, Y, Level, Slope, Seasonal, E, xregf, model, forc_dates)
@@ -266,11 +259,13 @@ forecast_mmm_cpp <- function(object, newxreg = NULL, h = 12, nsim = 1000, forc_d
     Y <- sweep(Y, 2, sigma_scale, "*")
     Y <- sweep(Y, 2, mu, "+")
   }
-  Level <- out$Level[,-1,drop = FALSE]
-  Slope <- out$Slope[,-1,drop = FALSE]
+  Level <- out$Level
+  Level <- Level[,1:(ncol(Level) - 1), drop = FALSE]
+  Slope <- out$Slope
+  Slope <- Slope[,1:(ncol(Slope) - 1), drop = FALSE]
   Seasonal <- out$Seasonal
   Seasonal <- t(Seasonal[,frequency,])
-  Seasonal <- Seasonal[,-1,drop = FALSE]
+  Seasonal <- Seasonal[,1:(ncol(Seasonal) - 1), drop = FALSE]
   xregf <- xregf[-1]
   E <- E[,-1,drop = FALSE]
   zList <- wrap_forecast_output(object, Y, Level, Slope, Seasonal, E, xregf, model, forc_dates)
@@ -363,11 +358,14 @@ forecast_mam_cpp <- function(object, newxreg=NULL, h = 12, nsim = 1000, forc_dat
     Y <- sweep(Y, 2, sigma_scale, "*")
     Y <- sweep(Y, 2, mu, "+")
   }
-  Level <- out$Level[,-1,drop = FALSE]
-  Slope <- out$Slope[,-1,drop = FALSE]
+  Level <- out$Level
+  Level <- Level[,1:(ncol(Level) - 1), drop = FALSE]
+  Slope <- out$Slope
+  Slope <- Slope[,1:(ncol(Slope) - 1), drop = FALSE]
   Seasonal <- out$Seasonal
   Seasonal <- t(Seasonal[,frequency,])
-  Seasonal <- Seasonal[,-1,drop = FALSE]
+  Seasonal <- Seasonal[,1:(ncol(Seasonal) - 1), drop = FALSE]
+
   xregf <- xregf[-1]
   E <- E[,-1,drop = FALSE]
   zList <- wrap_forecast_output(object, Y, Level, Slope, Seasonal, E, xregf, model, forc_dates)
@@ -464,11 +462,13 @@ forecast_powermam_cpp <- function(object, newxreg = NULL, h = 12, nsim = 1000, f
     Y <- sweep(Y, 2, sigma_scale, "*")
     Y <- sweep(Y, 2, mu, "+")
   }
-  Level <- out$Level[,-1,drop = FALSE]
-  Slope <- out$Slope[,-1,drop = FALSE]
+  Level <- out$Level
+  Level <- Level[,1:(ncol(Level) - 1), drop = FALSE]
+  Slope <- out$Slope
+  Slope <- Slope[,1:(ncol(Slope) - 1), drop = FALSE]
   Seasonal <- out$Seasonal
   Seasonal <- t(Seasonal[,frequency,])
-  Seasonal <- Seasonal[,-1,drop = FALSE]
+  Seasonal <- Seasonal[,1:(ncol(Seasonal) - 1), drop = FALSE]
   xregf <- xregf[-1]
   E <- E[,-1,drop = FALSE]
   zList <- wrap_forecast_output(object, Y, Level, Slope, Seasonal, E, xregf, model, forc_dates)
@@ -483,6 +483,7 @@ wrap_forecast_output <- function(object, Y, Level, Slope, Seasonal, E, xregf, mo
   colnames(Slope)     <- as.character(forc_dates)
   colnames(Seasonal)  <- as.character(forc_dates)
   names(xregf)        <- as.character(forc_dates)
+  colnames(E)        <- as.character(forc_dates)
   date_class <- attr(object$spec$target$sampling, "date_class")
   dist_classes <- c("tsets.distribution", "tsmodel.distribution")
   class(Level) <- dist_classes
@@ -491,22 +492,31 @@ wrap_forecast_output <- function(object, Y, Level, Slope, Seasonal, E, xregf, mo
   attr(Y, "date_class") <- date_class
   class(E)     <- dist_classes
   attr(E, "date_class") <- date_class
+  tsx <- tsdecompose(object)
+  Level <- list(distribution = Level, original_series = tsx$Level)
+  class(Level) <- "tsmodel.predict"
   if (model[1] == 0) {
     Slope <- NULL
   } else {
     class(Slope) <- dist_classes
     attr(Slope, "date_class") <- date_class
+    Slope <- list(distribution = Slope, original_series = tsx$Slope)
+    class(Slope) <- "tsmodel.predict"
   }
   if (model[2] == 0) {
     Seasonal <- NULL
   } else{
     class(Seasonal) <- dist_classes
     attr(Seasonal, "date_class") <- date_class
+    Seasonal <- list(distribution = Seasonal, original_series = tsx$Seasonal)
+    class(Seasonal) <- "tsmodel.predict"
   }
   if (object$model$setup$include_xreg == 0) {
     xregf <- NULL
   }
-  decomposition <- list(Level = Level, Slope = Slope, Seasonal = Seasonal, X = xregf, Error = E, dates = as.character(forc_dates))
+  E <- list(distribution = E, original_series = residuals(object, raw = TRUE))
+  class(E) <- "tsmodel.predict"
+  decomposition <- list(Level = Level, Slope = Slope, Seasonal = Seasonal, X = xregf, Error = E)
   zList <- list(distribution = Y, original_series = zoo(object$spec$target$y_orig, object$spec$target$index), h = model[3],
                 spec = object$spec, decomposition = decomposition)
   class(zList) <- dist_classes
@@ -523,63 +533,63 @@ forecast_simulation <- function(object, newxreg, h, nsim, forc_dates, innov = NU
          "4" = forecast_powermam_cpp(object = object, newxreg = newxreg, h = h, nsim = nsim, forc_dates = forc_dates, innov, custom_slope = custom_slope, init_states = init_states, innov_type = innov_type, sigma_scale = sigma_scale, ...))
 }
 
-forecast_simulation_redraw <- function(object, fcast_dist, newxreg, h, nsim, drop_na, drop_negative, forc_dates, innov = NULL, custom_slope = NULL, init_states = NULL, innov_type = "q", sigma_scale = NULL, ...)
-{
-  nsim_act <- nrow(fcast_dist)
-  resim_iter <- 0
-  max_resim_iter <- 10
-
-  while (nsim_act < nsim && resim_iter < max_resim_iter) {
-    resim_iter <- resim_iter + 1
-
-    resim_ratio <- nsim / max(nsim_act,1)
-    n_resim <- ceiling(resim_ratio * (nsim - nsim_act + 100))
-
-    new_fcast_dist <- forecast_simulation(object = object, newxreg = newxreg, h = h, nsim = n_resim, forc_dates = forc_dates, innov = innov, custom_slope = custom_slope, init_states = init_states, innov_type = innov_type, sigma_scale = sigma_scale, ...)$distribution
-    new_fcast_dist <- forecast_sanitycheck(new_fcast_dist, h, nsim, drop_na, drop_negative, verbose = FALSE)
-    fcast_dist <- rbind(fcast_dist,new_fcast_dist)
-    nsim_act <- nrow(fcast_dist)
-  }
-  if (resim_iter >= max_resim_iter) {
-    warning(paste0("\nmaximum number of resampling iterations reached. Forecast distribution might have less than ", nsim, " draws."))
-  }
-  if (nsim_act > nsim) {
-    # trim excess
-    fcast_dist <- fcast_dist[1:nsim,]
-  }
-  return(fcast_dist)
-}
-
-
-forecast_sanitycheck <- function(fcast_dist, h, nsim, drop_na, drop_negative, verbose = TRUE)
-{
-  if (drop_na) {
-    good_inds <- (rowSums(is.na(fcast_dist) | is.nan(fcast_dist) | is.infinite(fcast_dist)) == 0)
-    if (any(!good_inds)) {
-      if (verbose) {
-        warning("\nNA/NaN/Inf values detected (and removed) from the simulated forecast distribution")
-      }
-      fcast_dist <- fcast_dist[good_inds,]
-      if (length(fcast_dist) < 10*h) {
-        if (verbose) {
-          warning("\nToo many bad draws detected in the simulated forecast distribution; setting forecast matrix to zero")
-        }
-        fcast_dist <- matrix(0, nsim, h)
-      }
-    }
-  }
-  if (drop_negative) {
-    good_inds <- (rowSums( fcast_dist < 0 ) == 0)
-    fcast_dist <- fcast_dist[good_inds,]
-    if (length(fcast_dist) < 10*h) {
-      if (verbose) {
-        warning("\nToo many negative draws detected in the simulated forecast distribution; setting forecast matrix to zero")
-      }
-      fcast_dist <- matrix(0, nsim, h)
-    }
-  }
-  return(fcast_dist)
-}
+# forecast_simulation_redraw <- function(object, fcast_dist, newxreg, h, nsim, drop_na, drop_negative, forc_dates, innov = NULL, custom_slope = NULL, init_states = NULL, innov_type = "q", sigma_scale = NULL, ...)
+# {
+#   nsim_act <- nrow(fcast_dist)
+#   resim_iter <- 0
+#   max_resim_iter <- 10
+#
+#   while (nsim_act < nsim && resim_iter < max_resim_iter) {
+#     resim_iter <- resim_iter + 1
+#
+#     resim_ratio <- nsim / max(nsim_act,1)
+#     n_resim <- ceiling(resim_ratio * (nsim - nsim_act + 100))
+#
+#     new_fcast_dist <- forecast_simulation(object = object, newxreg = newxreg, h = h, nsim = n_resim, forc_dates = forc_dates, innov = innov, custom_slope = custom_slope, init_states = init_states, innov_type = innov_type, sigma_scale = sigma_scale, ...)$distribution
+#     new_fcast_dist <- forecast_sanitycheck(new_fcast_dist, h, nsim, drop_na, drop_negative, verbose = FALSE)
+#     fcast_dist <- rbind(fcast_dist,new_fcast_dist)
+#     nsim_act <- nrow(fcast_dist)
+#   }
+#   if (resim_iter >= max_resim_iter) {
+#     warning(paste0("\nmaximum number of resampling iterations reached. Forecast distribution might have less than ", nsim, " draws."))
+#   }
+#   if (nsim_act > nsim) {
+#     # trim excess
+#     fcast_dist <- fcast_dist[1:nsim,]
+#   }
+#   return(fcast_dist)
+# }
+#
+#
+# forecast_sanitycheck <- function(fcast_dist, h, nsim, drop_na, drop_negative, verbose = TRUE)
+# {
+#   if (drop_na) {
+#     good_inds <- (rowSums(is.na(fcast_dist) | is.nan(fcast_dist) | is.infinite(fcast_dist)) == 0)
+#     if (any(!good_inds)) {
+#       if (verbose) {
+#         warning("\nNA/NaN/Inf values detected (and removed) from the simulated forecast distribution")
+#       }
+#       fcast_dist <- fcast_dist[good_inds,]
+#       if (length(fcast_dist) < 10*h) {
+#         if (verbose) {
+#           warning("\nToo many bad draws detected in the simulated forecast distribution; setting forecast matrix to zero")
+#         }
+#         fcast_dist <- matrix(0, nsim, h)
+#       }
+#     }
+#   }
+#   if (drop_negative) {
+#     good_inds <- (rowSums( fcast_dist < 0 ) == 0)
+#     fcast_dist <- fcast_dist[good_inds,]
+#     if (length(fcast_dist) < 10*h) {
+#       if (verbose) {
+#         warning("\nToo many negative draws detected in the simulated forecast distribution; setting forecast matrix to zero")
+#       }
+#       fcast_dist <- matrix(0, nsim, h)
+#     }
+#   }
+#   return(fcast_dist)
+# }
 
 # mean calculations
 
@@ -597,170 +607,241 @@ forecast_backtransform <- function(fcast_dist, transform)
   return(list(mean = mean.forecast, dist = f1))
 }
 
-analytic_moments.aaa <- function(mod, h = 1, init_state = NULL)
+# class2 and class3 taken from Hyndman's forecast package
+# based on sections 6.3 of "Forecasting with Exponential Smoothing" book
+
+analytic_moments.class1 <- function(mod, h = 1, newxreg  = NULL, init_states = NULL)
 {
-  N <- NROW(mod$model$states)
   m <- mod$spec$seasonal$frequency
-  if (is.null(init_state)) {
-    init_state <- N
-  }
-  init_state <- as.integer(init_state)
-  if (max(init_state) > N) stop("\nmax of init_state is greater than index of states")
-  if (min(init_state) < 1) stop("\nmin of init_state is less than 1")
-  l_n <- colMeans(mod$model$states[init_state,"Level", drop = FALSE])
-  alpha <- coef(mod)["alpha"]
-  if (mod$spec$model$include_trend == 1) {
-    b_n <- colMeans(mod$model$states[init_state,"Trend", drop = FALSE])
-    beta <- coef(mod)["beta"]
+  if (is.null(init_states)) {
+    last_state <- tail(mod$model$states, 1)
   } else {
-    b_n <- 0
-    beta <- 0
+    last_state <- init_states
   }
-  if (mod$spec$model$include_damped == 1) {
-    phi <- coef(mod)["phi"]
+  last_state <- as.numeric(last_state)
+  par <- coef(mod)
+  if (mod$spec$xreg$include_xreg & !is.null(newxreg)) {
+    X <- mod$spec$xreg$xreg
+    cf <- mod$model$setup$parmatrix
+    rnames <- rownames(cf)
+    xbeta <- cf[grepl("^rho",rnames),1]
+    xreg <- as.numeric(coredata(newxreg) %*% xbeta)
+  } else {
+    xreg <- rep(0, h)
+  }
+  sigma2 <- sd(residuals(mod, raw = T))^2
+  p <- length(last_state)
+  H <- matrix(c(1, rep(0, p - 1)), nrow = 1)
+  if (substr(mod$spec$model$model,3,3) == "A") {
+    H[1, p] <- 1
+  }
+  if (substr(mod$spec$model$model,2,2) == "A") {
+    if (mod$spec$model$include_damped) {
+      H[1, 2] <- par["phi"]
+    } else {
+      H[1, 2] <- 1
+    }
+  }
+  F <- matrix(0, p, p)
+  F[1, 1] <- 1
+  if (substr(mod$spec$model$model,2,2) == "A") {
+    if (mod$spec$model$include_damped) {
+      F[1, 2] <- F[2, 2] <- par["phi"]
+    } else {
+      F[1, 2] <- F[2, 2] <- 1
+    }
+  }
+  if (substr(mod$spec$model$model,3,3) == "A") {
+    F[p - m + 1, p] <- 1
+    F[(p - m + 2):p, (p - m + 1):(p - 1)] <- diag(m - 1)
+  }
+  G <- matrix(0, nrow = p, ncol = 1)
+  G[1, 1] <- par["alpha"]
+  if (substr(mod$spec$model$model,2,2) == "A") {
+    G[2, 1] <- par["beta"]
+  }
+  if (substr(mod$spec$model$model,3,3) == "A") {
+    G[3, 1] <- par["gamma"]
+  }
+  mu <- numeric(h)
+  Fj <- diag(p)
+  cj <- numeric(h - 1)
+  if (h > 1) {
+    for (i in 1:(h - 1))
+    {
+      mu[i] <- H %*% Fj %*% last_state + xreg[i]
+      cj[i] <- H %*% Fj %*% G
+      Fj <- Fj %*% F
+    }
+    cj2 <- cumsum(cj ^ 2)
+    var <- sigma2 * c(1, 1 + cj2)
+  }
+  else {
+    var <- sigma2
+  }
+  mu[h] <- H %*% Fj %*% last_state
+
+  return(list(mu = mu, var = var, cj = cj))
+
+}
+
+
+
+analytic_moments.class2 <- function(mod, h = 1, newxreg  = NULL, init_states = NULL)
+{
+  tmp <- analytic_moments.class2(mod, h = h, newxreg = newxreg, init_states = init_states)
+  theta <- numeric(h)
+  sigma <- sd(residuals(mod, raw = T))
+
+  theta[1] <- tmp$mu[1] ^ 2
+  if (h > 1) {
+    for (j in 2:h)
+      theta[j] <- tmp$mu[j] ^ 2 + sigma^2 * sum(tmp$cj[1:(j - 1)] ^ 2 * theta[(j - 1):1])
+  }
+  var <- (1 + sigma^2) * theta - tmp$mu ^ 2
+  return(list(mu = tmp$mu, var = var))
+}
+# need to rewrite this using matrix notation for inclusion of the regressors
+# and the array notation
+
+# also need to think about the centered seasonality issue
+
+analytic_moments.class3 <- function(mod, h = 1, newxreg  = NULL, init_states = NULL)
+{
+  m <- mod$spec$seasonal$frequency
+  if (is.null(init_states)) {
+    last_state <- tail(mod$model$states, 1)
+  } else {
+    last_state <- init_states
+  }
+  p <- length(last_state)
+  slope <- ifelse(substr(mod$spec$model$model,2,2) != "N", 1, 0)
+  H1 <- matrix(rep(1, 1 + slope), nrow = 1)
+  H2 <- matrix(c(rep(0, m - 1), 1), nrow = 1)
+  par <- coef(mod)
+  sigma2 <- sd(residuals(mod, raw = T))^2
+  if (mod$spec$xreg$include_xreg & !is.null(newxreg)) {
+    return(analytic_moments.class3x(mod, h = h, newxreg  = newxreg, init_states = init_states))
+  }
+  if (mod$spec$model$include_damped) {
+    phi <- par["phi"]
   } else {
     phi <- 1
   }
-  if (mod$spec$model$include_seasonal == 1) {
-    s_n <- rev(colMeans(mod$model$states[init_state,grepl("S[0-9]",colnames(mod$model$states)), drop = FALSE]))
-    gamma <- coef(mod)["gamma"]
+  if (slope == 0) {
+    F1 <- 1
+    G1 <- par["alpha"]
   } else {
-    s_n <- NULL
-    gamma <- 0
+    F1 <- rbind(c(1, 1), c(0, 1))
+    G1 <- rbind(c(par["alpha"], par["alpha"]), c(par["beta"], par["beta"]))
   }
-  sigma <- sd(residuals(mod, raw = T))
-  hplus <- ( ((1:h) - 1) %% m ) + 1
-  mu <- rep(0, h)
-  v <- rep(0, h)
-  c <- rep(0, h)
-  for (i in 1:h) {
-    if (i %% m == 0) d <- 1 else d <- 0
-    c[i] <- alpha + beta*sum(phi^(1:i)) + gamma * d
-    mu[i] <- l_n + sum(phi^(1:i)) * b_n
-    if (!is.null(s_n)) {
-      mu[i] <- mu[i] + s_n[hplus[i]]
-    }
-    if (i == 1) {
-      v[i] <- sigma^2
-    } else {
-      v[i] <- sigma^2 * (1 + sum(c[1:(i - 1)]^2))
-    }
+  F2 <- rbind(c(rep(0, m - 1), 1), cbind(diag(m - 1), rep(0, m - 1)))
+
+  G2 <- matrix(0, m, m)
+  G2[1, m] <- par["gamma"]
+  Mh <- matrix(last_state[1:(p - m)]) %*% matrix(last_state[(p - m + 1):p], nrow = 1)
+  Vh <- matrix(0, length(Mh), length(Mh))
+  H21 <- H2 %x% H1
+  F21 <- F2 %x% F1
+  G21 <- G2 %x% G1
+  K <- (G2 %x% F1) + (F2 %x% G1)
+  mu <- var <- numeric(h)
+  for (i in 1:h)
+  {
+    mu[i] <- H1 %*% Mh %*% t(H2)
+    mu[i] <- mu[i]
+    var[i] <- (1 + sigma2) * H21 %*% Vh %*% t(H21) + sigma2 * mu[i] ^ 2
+    vecMh <- c(Mh)
+    Vh <- F21 %*% Vh %*% t(F21) + sigma2 * (F21 %*% Vh %*% t(G21) + G21 %*% Vh %*% t(F21) + K %*% (Vh + vecMh %*% t(vecMh)) %*% t(K) + sigma2 * G21 %*% (3 * Vh + 2 * vecMh %*% t(vecMh)) %*% t(G21))
+    Mh <- F1 %*% Mh %*% t(F2) + G1 %*% Mh %*% t(G2) * sigma2
   }
-  return(list(mu = mu, var = v, cj = c))
+  return(list(mu = mu, var = var))
 }
 
-analytic_moments.mam <- function(mod, h = 1, init_state = NULL)
+analytic_moments.class3x <- function(mod, h = 1, newxreg  = NULL, init_states = NULL)
 {
-  N <- NROW(mod$model$states)
   m <- mod$spec$seasonal$frequency
-  if (is.null(init_state)) {
-    init_state <- N
-  }
-  init_state <- as.integer(init_state)
-  if (max(init_state) > N) stop("\nmax of init_state is greater than index of states")
-  if (min(init_state) < 1) stop("\nmin of init_state is less than 1")
-  l_n <- colMeans(mod$model$states[init_state,"Level", drop = FALSE])
-  alpha <- coef(mod)["alpha"]
-  if (mod$spec$model$include_trend == 1) {
-    b_n <- colMeans(mod$model$states[init_state,"Trend", drop = FALSE])
-    beta <- coef(mod)["beta"]
+  if (is.null(init_states)) {
+    last_state <- tail(mod$model$states, 1)
   } else {
-    b_n <- 0
+    last_state <- init_states
+  }
+  last_state <- as.numeric(last_state)
+  p <- length(last_state)
+  slope <- ifelse(substr(mod$spec$model$model,2,2) != "N", 1, 0)
+  par <- coef(mod)
+  sigma2 <- sd(residuals(mod, raw = T))^2
+  if (mod$spec$xreg$include_xreg & !is.null(newxreg)) {
+    cf <- mod$model$setup$parmatrix
+    rnames <- rownames(cf)
+    xbeta <- cf[grepl("^rho",rnames),1]
+    xreg <- as.numeric(coredata(newxreg) %*% xbeta)
+  } else {
+    xreg <- rep(0, h)
+  }
+  if (mod$spec$model$include_damped) {
+    phi <- cumsum(par["phi"]^(1:h))
+  } else {
+    phi <- 1:h
+  }
+  if (mod$spec$model$include_trend) {
+    beta <- par["beta"]
+    b_n <- last_state[2]
+  } else {
     beta <- 0
+    b_n <- 0
   }
-  if (mod$spec$model$include_damped == 1) {
-    phi <- coef(mod)["phi"]
-  } else {
-    phi <- 1
-  }
-  if (mod$spec$model$include_seasonal == 1) {
-    s_n <- rev(colMeans(mod$model$states[init_state,grepl("S[0-9]",colnames(mod$model$states)), drop = FALSE]))
-    gamma <- coef(mod)["gamma"]
-  } else {
-    s_n <- NULL
-    gamma <- 0
-  }
-  sigma <- sd(residuals(mod, raw = T))
+  s_n <- rev(last_state[(p - m + 1):p])
+  gamma <- par["gamma"]
   hplus <- ( ((1:h) - 1) %% m ) + 1
-  mu <- rep(0, h)
-  v <- rep(0, h)
-  c <- rep(0, h)
+  hm <- ((1:h) - 1)/m
+  l_n <- last_state[1]
+  alpha <- par["alpha"]
+  cj <-  theta <- mu <- var <- rep(0, h)
   for (i in 1:h) {
-    if (i %% m == 0) d <- 1 else d <- 0
-    c[i] <- alpha + beta*sum(phi^(1:i)) + gamma * d
-    mu[i] <- l_n + sum(phi^(1:i)) * b_n
-    if (!is.null(s_n)) {
-      mu[i] <- mu[i] + s_n[hplus[i]]
-    }
+    nonseasonal_mean <- l_n + phi[i] * b_n + xreg[i]
+    mu[i] <- nonseasonal_mean * s_n[hplus[i]]
+    cj[i] <- alpha + beta * phi[i]
     if (i == 1) {
-      v[i] <- sigma^2
+      theta[i] <- nonseasonal_mean^2
     } else {
-      v[i] <- (1 + sigma^2) * (1 + sum(c[1:(i - 1)]^2))
+      theta[i] <- nonseasonal_mean^2 + sigma2 * sum((cj[1:(i - 1)]^2) * (theta[i - (1:(i - 1))]))
     }
+    var[i] <- s_n[hplus[i]]^2 * (theta[i] * (1 + sigma2) * (1 + gamma^2 * sigma2)^hm[i] - nonseasonal_mean^2)
   }
-  return(list(mu = mu, var = v, cj = c))
+  return(list(mu = mu, var = var))
 }
 
-analytic_moments.mmm <- function(mod, h = 1, init_state = NULL)
+# ToDO: incomplete -> need to add xreg
+tsmoments.tsets.estimate <- function(object, h = 1,  newxreg = NULL, init_states = NULL, ...)
 {
-  N <- NROW(mod$model$states)
-  m <- mod$spec$seasonal$frequency
-  if (is.null(init_state)) {
-    init_state <- N
-  }
-  init_state <- as.integer(init_state)
-  if (max(init_state) > N) stop("\nmax of init_state is greater than index of states")
-  if (min(init_state) < 1) stop("\nmin of init_state is less than 1")
-  l_n <- colMeans(mod$model$states[init_state,"Level", drop = FALSE])
-  alpha <- coef(mod)["alpha"]
-  if (mod$spec$model$include_trend == 1) {
-    b_n <- colMeans(mod$model$states[init_state,"Trend", drop = FALSE])
-    beta <- coef(mod)["beta"]
-  } else {
-    b_n <- 0
-    beta <- 0
-  }
-  if (mod$spec$model$include_damped == 1) {
-    phi <- coef(mod)["phi"]
-  } else {
-    phi <- 1
-  }
-  if (mod$spec$model$include_seasonal == 1) {
-    s_n <- rev(colMeans(mod$model$states[init_state,grepl("S[0-9]",colnames(mod$model$states)), drop = FALSE]))
-    gamma <- coef(mod)["gamma"]
-  } else {
-    s_n <- NULL
-    gamma <- 0
-  }
-  sigma <- sd(residuals(mod, raw = T))
-  hplus <- ( ((1:h) - 1) %% m ) + 1
-  mu <- rep(0, h)
-  v <- rep(0, h)
-  c <- rep(0, h)
-  for (i in 1:h) {
-    if (i %% m == 0) d <- 1 else d <- 0
-    c[i] <- alpha + beta*sum(phi^(1:i)) + gamma * d
-    mu[i] <- l_n + sum(phi^(1:i)) * b_n
-    if (!is.null(s_n)) {
-      mu[i] <- mu[i] + s_n[hplus[i]]
-    }
-    if (i == 1) {
-      v[i] <- sigma^2
-    } else {
-      v[i] <- sigma^2 * (1 + sum(c[1:(i - 1)]^2))
-    }
-  }
-  return(list(mu = mu, var = v, cj = c))
-}
-
-analytic_moments <- function(mod, h = 1, init_state = NULL)
-{
-  type <- mod$model$setup$type
-  # not analytical solution or approximation for power MAM
+  type <- object$model$setup$type
+  # no analytical solution or approximation for power MAM
   if (type == 4) return(NULL)
+  type <- object$spec$model$class
+  # no analytical solution for class 4+ models (MMN, MMM)
+  if (type > 3) {
+    return(NULL)
+  }
+  # some checks
+  if (!is.null(init_states)) {
+    n_required <- ncol(object$model$states)
+    if (length(as.numeric(init_states)) != n_required) stop("\nlength of init_states not equal to number of states in model.")
+  }
+  if (!is.null(newxreg)) {
+    include_xreg <- object$spec$model$include_xreg
+    if (!include_xreg) {
+      warning("\nnewxreg provided when there are no regressors in the model.")
+      newxreg <- NULL
+    } else {
+      n_required <- NCOL(object$spec$xreg$xreg)
+      if (NCOL(newxreg) != n_required) stop("\nnumber of columns of newxreg not equal to xreg in model/")
+      if (NROW(newxreg) != h) stop("\nnumber of rows of newxreg not equal to horizon (h).")
+    }
+  }
   out <- switch(as.character(type),
-                "1"  = analytic_moments.aaa(mod, h, init_state),
-                "2" = analytic_moments.mmm(mod, h, init_state),
-                "3" = analytic_moments.mam(mod, h, init_state))
+                "1"  = analytic_moments.class1(object, h = h, newxreg = newxreg, init_states = init_states),
+                "2" = analytic_moments.class2(object, h = h, newxreg = newxreg, init_states = init_states),
+                "3" = analytic_moments.class3(object, h = h, newxreg = newxreg, init_states = init_states))
   return(out)
 }

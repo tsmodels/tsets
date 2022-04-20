@@ -1,4 +1,4 @@
-estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace = 0), autodiff = FALSE, ...)
+estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace = 0), autodiff = TRUE, ...)
 {
   # create an environment for the soft barrier solver
   ets_env <- new.env(hash = TRUE)
@@ -48,7 +48,7 @@ estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace 
   } else {
     if (solver == "nlminb") {
       opt_res <- nlminb(start = pars, objective = lfun, lower = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"lower"],
-                        upper = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"upper"], setup = setup, 
+                        upper = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"upper"], setup = setup,
                         scale = 1/parscale, control = control)
       pars <- opt_res$par
       lik <- opt_res$objective
@@ -60,7 +60,7 @@ estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace 
         while (cont_) {
           run_count <- run_count + 1
           opt_res <- nlminb(start = pars, objective = lfun, lower = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"lower"],
-                            upper = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"upper"], setup = setup, 
+                            upper = setup$parmatrix[which(setup$parmatrix[,"estimate"] == 1),"upper"], setup = setup,
                             scale = 1/parscale, control = control)
           pars <- opt_res$par
           lik <- opt_res$objective
@@ -119,22 +119,22 @@ estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace 
       x <- rep(0, length(setup$data) + 1)
     }
   }
-  
+
   if (setup$type == 4) {
-    filt <- ffun(setup$data, alpha = setup$parmatrix["alpha","init"], beta = setup$parmatrix["beta","init"], 
-                 gamma = setup$parmatrix["gamma","init"], phi = setup$parmatrix["phi","init"], 
+    filt <- ffun(setup$data, alpha = setup$parmatrix["alpha","init"], beta = setup$parmatrix["beta","init"],
+                 gamma = setup$parmatrix["gamma","init"], phi = setup$parmatrix["phi","init"],
                  l0 = setup$parmatrix["l0","init"], b0 = setup$parmatrix["b0","init"],
                  theta = setup$parmatrix["theta","init"], delta = setup$parmatrix["delta","init"],
-                 s0 = setup$parmatrix[paste0("s",0:(setup$frequency - 2)),"init"], 
+                 s0 = setup$parmatrix[paste0("s",0:(setup$frequency - 2)),"init"],
                  frequency = setup$frequency, x = x, setup = setup)
   } else {
-    filt <- ffun(setup$data, alpha = setup$parmatrix["alpha","init"], beta = setup$parmatrix["beta","init"], 
-                 gamma = setup$parmatrix["gamma","init"], phi = setup$parmatrix["phi","init"], 
+    filt <- ffun(setup$data, alpha = setup$parmatrix["alpha","init"], beta = setup$parmatrix["beta","init"],
+                 gamma = setup$parmatrix["gamma","init"], phi = setup$parmatrix["phi","init"],
                  l0 = setup$parmatrix["l0","init"], b0 = setup$parmatrix["b0","init"],
-                 s0 = setup$parmatrix[paste0("s",0:(setup$frequency - 2)),"init"], 
+                 s0 = setup$parmatrix[paste0("s",0:(setup$frequency - 2)),"init"],
                  frequency = setup$frequency, x = x, setup = setup)
   }
-  
+
   setup$parmatrix["sigma","init"] <- sd(filt$residuals[which(setup$good[-1] == 1)])
   filt$setup <- setup
   filt$loglik <- lik
@@ -340,7 +340,7 @@ tsets_ll_mam <- function(pars, setup)
   pars <- as.numeric(parmatrix[c("l0","b0","alpha","beta","gamma","phi"),1])
   model <- c(setup$include_trend, setup$include_seasonal, setup$frequency, NROW(setup$data) + 1, setup$normalized_seasonality)
   y <- c(0, as.numeric(setup$data))
-  
+
   if (!setup$debug) {
     f <- filter_mam(model_ = model, y_ = y, pars_ = pars, s0_ = s0, x_ = x, good_ = setup$good)
     if (setup$estimation == 1) {
@@ -524,3 +524,41 @@ pars_estim_inv_trans <- function(pars, mult_trend, mult_season, parmatrix)
 
   return(pars)
 }
+#################################################################################
+# From Rob Hyndman's forecast package (not yet used).
+admissible_region <- function(alpha, beta = NULL, gamma = NULL, phi = 1, m = 1) {
+  if (phi < 0 || phi > 1 + 1e-8) {
+    return(FALSE)
+  }
+  if (is.null(gamma)) {
+    if (alpha < 1 - 1 / phi || alpha > 1 + 1 / phi) {
+      return(FALSE)
+    }
+    if (!is.null(beta)) {
+      if (beta < alpha * (phi - 1) || beta > (1 + phi) * (2 - alpha)) {
+        return(FALSE)
+      }
+    }
+  } else if (m > 1) {
+    if (is.null(beta)) {
+      beta <- 0
+    }
+    if (gamma < max(1 - 1 / phi - alpha, 0) || gamma > 1 + 1 / phi - alpha) {
+      return(FALSE)
+    }
+    if (alpha < 1 - 1 / phi - gamma * (1 - m + phi + phi * m) / (2 * phi * m)) {
+      return(FALSE)
+    }
+    if (beta < -(1 - phi) * (gamma / m + alpha)) {
+      return(FALSE)
+    }
+    P <- c(phi * (1 - alpha - gamma), alpha + beta - alpha * phi + gamma - 1, rep(alpha + beta - alpha * phi, m - 2), (alpha + beta - phi), 1)
+    roots <- polyroot(P)
+    if (max(abs(roots)) > 1 + 1e-10) {
+      return(FALSE)
+    }
+  }
+  # pass
+  return(TRUE)
+}
+#################################################################################

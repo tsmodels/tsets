@@ -1,10 +1,10 @@
 # automatic model selection
 auto_ets = function(y, xreg = NULL, transformation = NULL, lambda = NULL, lower = 0, upper = 1,
                     metric = "AIC", frequency = NULL, normalized_seasonality = TRUE,
-                    additive_only = FALSE, cores = NULL, solver = "nlminb",
+                    additive_only = FALSE, solver = "nlminb",
                     control = list(trace = 0, maxit = 1000), power_model = FALSE,
-                    include_damped = TRUE, verbose = FALSE, retain = 1,
-                    scale = FALSE, seasonal_init = "fixed", autodiff = FALSE, ...)
+                    include_damped = TRUE, trace = FALSE, return_table = FALSE,
+                    scale = FALSE, seasonal_init = "fixed", autodiff = TRUE, ...)
 {
   # sanity check of model input
   valid_criteria <- c("AIC","BIC","AICc","MAPE","MASE","MSLRE")
@@ -54,75 +54,40 @@ auto_ets = function(y, xreg = NULL, transformation = NULL, lambda = NULL, lower 
     ngrid <- NROW(sgrid)
     warnings("\nnot estimating seasonal models (frequency = 1 or NULL)")
   }
-  i <- 1
-  if (is.null(cores)) {
-    registerDoSEQ()
-    v <- foreach(i = 1:ngrid, .packages = c("tsets","xts","tsaux")) %do% {
-      # check if not additive
-        if (substr(sgrid[i,'model'],1,1) == "M") {
-            lambda <- NULL
-            trm <- NULL
-        } else {
-            trm <- transformation[1]
-        }
-        damped_option_i <- as.logical(sgrid[i,"damped"])
-        power_option_i <- as.logical(sgrid[i,"power"])
-        spec <- suppressWarnings(ets_modelspec(y, model = sgrid[i,'model'], transformation = trm,
-                                               lambda = lambda, damped = damped_option_i, power = power_option_i,
-                                               xreg = xreg, frequency = frequency, normalized_seasonality = normalized_seasonality,
-                                               scale = scale, seasonal_init = seasonal_init, lower = lower, upper = upper))
-        mod <- estimate(spec, solver = solver, control = control, autodiff = autodiff)
-        return(mod)
-    }
-  } else {
-    cl <- makeCluster(cores)
-    registerDoSNOW(cl)
-    if (verbose) {
-      pb <- txtProgressBar(max = ngrid, style = 3)
-      progress <- function(n) setTxtProgressBar(pb, n)
-      opts <- list(progress = progress)
-    } else {
-      opts <- NULL
-    }
-    v <- foreach(i = 1:ngrid, .packages = c("tsets","xts","tsaux"), .options.snow = opts) %dopar% {
-        if (substr(sgrid[i,'model'],1,1) == "M") {
-            lambda <- NULL
-            trm <- NULL
-        } else {
-            trm <- transformation[1]
-        }
-        damped_option_i <- as.logical(sgrid[i,"damped"])
-        power_option_i <- as.logical(sgrid[i,"power"])
-        spec <- suppressWarnings(ets_modelspec(y, model = sgrid[i,'model'], transformation = trm,
-                                               lambda =  lambda, damped = damped_option_i, power = power_option_i,
-                                               xreg = xreg, frequency = frequency, normalized_seasonality = normalized_seasonality,
-                                               scale = scale, seasonal_init = seasonal_init, lower = lower, upper = upper))
-        mod <- estimate(spec, solver = solver, control = control, autodiff = autodiff)
-        return(mod)
-    }
-
-    if (verbose) close(pb)
-
-    stopCluster(cl)
+  if (trace) {
+    prog_trace <- progressor(ngrid)
   }
-
-  converge <- data.frame("Converged" = as.logical(1 - sapply(v, function(x) x$opt$convergence)), stringsAsFactors = FALSE)
-  metricsmat <- do.call(rbind, lapply(1:length(v), function(i) tsmetrics(v[[i]])))
-  parmat <- do.call.fast(rbind, lapply(1:length(v), function(i){
-    v[[i]]$model$setup$parmatrix[c("alpha","beta","gamma","phi","theta","delta","sigma"),1]
+  # ToDo: retain only coefs and metrics. Rerun for optimal model once more at end  (similar to tsissm seelection)
+  models %<-% future_lapply(1:ngrid, function(i) {
+      if (trace) prog_trace()
+      if (substr(sgrid[i,'model'],1,1) == "M") {
+          lambda <- NULL
+          trm <- NULL
+      } else {
+          trm <- transformation[1]
+      }
+      damped_option_i <- as.logical(sgrid[i,"damped"])
+      power_option_i <- as.logical(sgrid[i,"power"])
+      spec <- suppressWarnings(ets_modelspec(y, model = sgrid[i,'model'], transformation = trm,
+                                             lambda =  lambda, damped = damped_option_i, power = power_option_i,
+                                             xreg = xreg, frequency = frequency, normalized_seasonality = normalized_seasonality,
+                                             scale = scale, seasonal_init = seasonal_init, lower = lower, upper = upper))
+      mod <- estimate(spec, solver = solver, control = control, autodiff = autodiff)
+      return(mod)
+  }, future.packages = c("tsets","xts","tsaux"))
+  models <- eval(models)
+  converge <- data.frame("Converged" = as.logical(1 - sapply(models, function(x) x$opt$convergence)), stringsAsFactors = FALSE)
+  metricsmat <- do.call(rbind, lapply(1:length(models), function(i) tsmetrics(models[[i]])))
+  parmat <- do.call.fast(rbind, lapply(1:length(models), function(i){
+    models[[i]]$model$setup$parmatrix[c("alpha","beta","gamma","phi","theta","delta","sigma"),1]
   }))
-
   outmat <- cbind(sgrid, parmat, metricsmat, converge)
-
   crt <- sort.int(outmat[,metric], index.return = TRUE)
   outmat <- outmat[crt$ix,]
-
   rownames(outmat) <- NULL
-  optmodel <- v[[crt$ix[1]]]
-  optmodel$selection <- outmat
-
-  if (retain > 1) {
-    optmodel$retained <- v[crt$ix[2:retain]]
+  optmodel <- models[[crt$ix[1]]]
+  if (return_table) {
+    optmodel$selection <- outmat
   }
   class(optmodel) <- c(class(optmodel), "tsets.select")
   return(optmodel)
