@@ -25,10 +25,10 @@ Not currently used
 }
 }
 \value{
-For the estimated object, returns an xts matrix of with the fitted and
-state components (including error). For the predicted object, a list with the
+For the estimated object, returns an xts matrix of the state components
+(including error). For the predicted object, a list with the
 simulated object which includes the distribution matrix of the
-state components and their estimated valuesm, inheriting
+state components and their estimated values, inheriting
 class \dQuote{tsmodel.predict} (for pretty plotting functionality).
 }
 \author{
