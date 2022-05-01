@@ -332,18 +332,13 @@ tsdecompose.tsets.estimate <- function(object, simplify = FALSE, ...)
   } else {
     X <- NULL
   }
-
   # residuals
-  e <- xts(object$model$residuals, d)
-  colnames(e) <- "Residuals"
+  Irregular <- xts(object$model$residuals, d)
+  colnames(Irregular) <- "Irregular"
   if (simplify) {
-    Irregular <- e
-    colnames(Irregular) <- "Irregular"
-  }
-  if (simplify) {
-    return(list(fitted = f, Trend = Trend, Seasonal = Seasonal, X = X, Irregular = Irregular))
+    return(list(Trend = Trend, Seasonal = Seasonal, X = X, Irregular = Irregular))
   } else {
-    return(list(fitted = f, error = e, Level = Level, Slope = Slope, Seasonal = Seasonal, X = X))
+    return(list(Level = Level, Slope = Slope, Seasonal = Seasonal, X = X, Irregular = Irregular))
   }
 }
 
