@@ -231,7 +231,6 @@ forecast_mmm_cpp <- function(object, newxreg = NULL, h = 12, nsim = 1000, forc_d
   if (!is.null(innov)) {
     if (innov_type == "q") {
       E <- t(matrix(qtruncnorm(innov, a = -1, mean = 0, sd = coefficient["sigma"]), h, nsim))
-      E <- cbind(matrix(0, ncol = 1, nrow = nsim), E)
     } else {
       E <- pnorm(innov, 0, 1)
       E <- matrix(qtruncnorm(E, a = -1, mean = 0, sd = coefficient["sigma"]), h, nsim)
@@ -329,7 +328,6 @@ forecast_mam_cpp <- function(object, newxreg=NULL, h = 12, nsim = 1000, forc_dat
   if (!is.null(innov)) {
     if (innov_type == "q") {
       E <- t(matrix(qtruncnorm(innov, a = -1, mean = 0, sd = coefficient["sigma"]), h, nsim))
-      E <- cbind(matrix(0, ncol = 1, nrow = nsim), E)
     } else {
       E <- pnorm(innov, 0, 1)
       E <- matrix(qtruncnorm(E, a = -1, mean = 0, sd = coefficient["sigma"]), h, nsim)
@@ -433,7 +431,6 @@ forecast_powermam_cpp <- function(object, newxreg = NULL, h = 12, nsim = 1000, f
   if (!is.null(innov)) {
     if (innov_type == "q") {
       E <- t(matrix(qtruncnorm(innov, a = -1, mean = 0, sd = coefficient["sigma"]), h, nsim))
-      E <- cbind(matrix(0, ncol = 1, nrow = nsim), E)
     } else {
       E <- pnorm(innov, 0, 1)
       E <- matrix(qtruncnorm(E, a = -1, mean = 0, sd = coefficient["sigma"]), h, nsim)

@@ -13,7 +13,7 @@ plot.tsets.estimate = function(x, y = NULL, ...)
   if (!is.null(d$Slope))     n <- n + 1
   if (!is.null(d$Seasonal))  n <- n + 1
   if (!is.null(d$X))         n <- n + 1
-
+  f <- fitted(x)
   if (x$spec$model$include_damped == 1) {
     modelx <- paste0(substr(x$spec$model$model,1,1), substr(x$spec$model$model,2,2), "d", substr(x$spec$model$model,3,3))
   } else {
@@ -40,7 +40,7 @@ plot.tsets.estimate = function(x, y = NULL, ...)
   layout(mat = layout_matrix, heights = c(1.5, rep(1.25,n - 1)), widths = rep(2, n)) # Widths of the two columns
   par(mar = c(2,2,2,4))
   # Fitted
-  plot(as.zoo(d$fitted), type = "l", ylab = "", xlab = "", col = "black", main = modelx, cex.main = 0.9, lwd = 1.5)
+  plot(as.zoo(f), type = "l", ylab = "", xlab = "", col = "black", main = modelx, cex.main = 0.9, lwd = 1.5)
   lines(zoo(x$spec$target$y_orig,x$spec$target$index), col = "brown", lwd = 2, lty = 2)
   grid()
   mtext("Fitted", side = 4, adj = 0.5, padj = 0.5, cex = 0.8, font = 2, family = "mono")

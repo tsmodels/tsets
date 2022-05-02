@@ -365,6 +365,7 @@ tsdecompose.tsets.predict <- function(object, simplify = FALSE, ...)
     Irregular <- d$Error
     d <- list(Trend = Trend, Seasonal = Seasonal, X = X, Irregular = Irregular)
   } else {
+    d <- object$decomposition
     return(d)
   }
 }
