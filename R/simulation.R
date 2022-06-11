@@ -1,3 +1,55 @@
+#' Model Simulation
+#'
+#' @description Simulates paths from an ETS model with optional user specified values.
+#' @param object an object of class \dQuote{tsets.estimate}.
+#' @param nsim the number of paths per complete set of time steps (h).
+#' @param seed an object specifying if and how the random number generator should be
+#' initialized (\sQuote{seeded}). Either NULL or an integer that will be used in
+#' a call to set.seed before simulating the response vectors. If set, the value
+#' is saved as the "seed" attribute of the returned value. The default, NULL
+#' will not change the random generator state, and return .Random.seed as the
+#' \dQuote{seed} attribute in the returned object.
+#' @param h the number of time steps to simulate paths for. If this is NULL,
+#' it will use the same number of periods as in the original series.
+#' @param newxreg an optional matrix of regressors to use for the simulation
+#' if xreg was used in the estimation. If NULL and the estimated object had
+#' regressors, and h was also set to NULL, then the original regressors will
+#' be used.
+#' @param sim_dates an optional vector of simulation dates equal to h. If NULL
+#' will use the implied periodicity of the data to generate a regular sequence
+#' of dates after the first available date in the data.
+#' @param bootstrap whether to bootstrap the innovations from the estimated
+#' object by re-sampling from the empirical distribution.
+#' @param innov an optional vector of uniform innovations which will be
+#' translated to regular innovations using the appropriate distribution quantile
+#' function and model standard deviation. The length of this vector should be
+#' equal to nsim x horizon.
+#' @param sigma_scale an optional scalar which will scale the standard deviation
+#' of the innovations (useful for profiling under different assumptions). This
+#' applies to all approaches (parametric, bootstrap and custom innovations supplied
+#' values).
+#' @param pars an optional named vector of model coefficients which override the
+#' estimated coefficients. No checking is currently performed on the adequacy of
+#' these coefficients.
+#' @param ... not currently used.
+#' @details It is required that an initial object of class \dQuote{tsets.estimate}
+#' be passed to this function, but the parameters and initial states can be overriden
+#' by passing them as named values in the \sQuote{pars} argument. The default is
+#' to initialize the states from the seed states used in the estimated object,
+#' with h equal to the length of the original series (default for NULL h).
+#' Innovations for the simulation can either be parametric (Normal for additive
+#' or truncated Normal for multiplicative error models), based on the estimated
+#' residuals (bootstrap argument) or use supplied set of uniform random numbers
+#' (which are then translated into Normal or truncated Normal using standard
+#' deviation equal to the model sigma and optionally scaled by sigma_scale).
+#' @return An object of class \dQuote{tsets.simulate} with slots for the simulated
+#' series and states.
+#' @aliases simulate
+#' @method simulate tsets.estimate
+#' @rdname simulate
+#' @export
+#'
+#'
 simulate.tsets.estimate  = function(object, nsim = 1, seed = NULL, h = NULL, newxreg = NULL, sim_dates = NULL, bootstrap = FALSE, innov = NULL,
                                     sigma_scale = 1, pars = coef(object), ...)
 {

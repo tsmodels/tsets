@@ -156,6 +156,28 @@ tsets_filter_powermam <- function(y, alpha, beta, gamma, phi = 1, l0, b0, s0, fr
   return(list(filtered = f[-1], states = states, residuals = err[-1], fpower = fd[-1]))
 }
 ########################################################################################
+#' Online Model Filtering
+#'
+#' @description Online filter which updates the states and fitted values using
+#' new data.
+#' @param object an object of class \dQuote{tsets.estimate}.
+#' @param y an xts vector of new information related to y. The function checks
+#' whether y contains indices (dates) which are not in the passed object and
+#' only filters new information.
+#' @param newxreg An xts matrix of new information related to external regressors
+#' (if those were used in the original model estimated).
+#' @param ... not currently used.
+#' @details The new data is filtered (1 step ahead) using the last state of the
+#' object. Once this is complete, the object is updated with the new states
+#' and information so that the process can be continued on the same object as
+#' new information arrives.
+#' @return An object of class \dQuote{tsets.estimate}.
+#' @aliases tsfilter
+#' @method tsfilter tsets.estimate
+#' @rdname tsfilter
+#' @export
+#'
+#'
 tsfilter.tsets.estimate = function(object, y, newxreg = NULL, ...)
 {
   # check what part of y is after object$spec$target$y
@@ -177,7 +199,7 @@ tsfilter.tsets.estimate = function(object, y, newxreg = NULL, ...)
   if (any(is.na(yneworig))) {
     good[which(is.na(yneworig))] <- 0
   }
-  
+
   if (!is.null(object$spec$transform)) {
     y <- object$spec$transform$transform(yneworig, object$spec$transform$lambda)
   } else{

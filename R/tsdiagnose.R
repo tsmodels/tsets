@@ -23,19 +23,33 @@ check_parameters <- function(object)
     lb_check <- lb_check[c("alpha","beta","gamma","phi","theta","delta")]
     ub_check <- ipars[, "init"] <= ipars[, "upper"]
     ub_check <- ub_check[c("alpha","beta","gamma","phi","theta","delta")]
-    
+
     if (error_type == "Additive") {
-        condition_table <- data.table(coef = c("alpha","beta","gamma","phi","theta","delta"), value = round(as.numeric(cf[c("alpha","beta","gamma","phi","theta","delta")]),4), 
+        condition_table <- data.table(coef = c("alpha","beta","gamma","phi","theta","delta"), value = round(as.numeric(cf[c("alpha","beta","gamma","phi","theta","delta")]),4),
                    ">lb" = lb_check, "<ub" = ub_check, "condition" = c("NA"," < alpha"," < (1 - alpha)","NA","NA","NA"), "condition_pass" = c(NA, condition_slope, condition_seasonal,NA, NA, NA))
     } else {
         condition_residuals <- all(r > (-1))
-        condition_table <- data.table(coef = c("alpha","beta","gamma","phi","theta","delta","residuals"), value = c(round(as.numeric(cf[c("alpha","beta","gamma","phi","theta","delta")]),4), NA), 
+        condition_table <- data.table(coef = c("alpha","beta","gamma","phi","theta","delta","residuals"), value = c(round(as.numeric(cf[c("alpha","beta","gamma","phi","theta","delta")]),4), NA),
                    ">lb" = c(lb_check, condition_residuals), "<ub" = c(ub_check,NA))
     }
     return(condition_table)
 }
 
-
+#' Model Diagnostics
+#'
+#' @description Creates a short summary of model based diagnostics.
+#' @param object an object of class \dQuote{tsets.estimate}.
+#' @param plot whether to generate diagnostic plots to accompany summary.
+#' @param ... not currently used.
+#' @return A list of tables (printed out and returned invisibly) with
+#' Ljung-Box test for residual autocorrelation, parameter and model bounds
+#' diagnostics and outlier dates using the Rosner test from the
+#' \code{EnvStats} package.
+#' @aliases tsdiagnose
+#' @method tsdiagnose tsets.estimate
+#' @rdname tsdiagnose
+#' @export
+#'
 tsdiagnose.tsets.estimate <- function(object, plot = FALSE, ...)
 {
     ctable <- check_parameters(object)

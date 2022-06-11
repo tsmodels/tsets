@@ -1,3 +1,14 @@
+#' Model Fitted Values
+#'
+#' @description Extract the fitted values from an estimated model.
+#' @param object an object of class \dQuote{tsets.estimate}.
+#' @param ... not currently used.
+#' @aliases fitted
+#' @method fitted tsets.estimate
+#' @rdname fitted
+#' @export
+#'
+#'
 fitted.tsets.estimate <- function(object, ...)
 {
   if (!is.null(object$spec$transform)) {
@@ -10,6 +21,37 @@ fitted.tsets.estimate <- function(object, ...)
   return(out)
 }
 
+#' Model Residuals
+#'
+#' @description Extract the residual values from an estimated model.
+#' @param object an object of class \dQuote{tsets.estimate}.
+#' @param raw raw residuals are the model based values which for the additive
+#' model are on the Box Cox scale, whilst for multiplicative models are equal
+#' to actual/fitted - 1.
+#' @param h the horizon (steps) ahead residuals required. The default represents
+#' the standard residuals whilst for h>1 these are the (1:h)-step ahead in-sample
+#' predicted residuals for each time point under fixed coefficients.
+#' @param seed a seed value which initializes the simulated predictive distribution
+#' from which the h-step ahead forecasts are made in order to calculate the residuals.
+#' @param trace whether to show the progress bar for the h-step ahead residuals
+#' calculation. The user is expected to have set up appropriate handlers for
+#' this using the \dQuote{progressr} package.
+#' @param ... not currently used.
+#' @details For h>1, this is like performing an in-sample backtest starting at
+#' time 1 with fixed coefficients. The purpose of having the matrix of h-step
+#' ahead residuals is in order to calculate the 1:h covariance matrix as well
+#' as the cross 1:h covariance matrix when ensembling series at multiple horizons.
+#' @return An xts vector of the model residuals for h = 1, else a data.table
+#' with rows representing the first prediction date and columns the h-ahead
+#' forecast residuals.
+#' @note The function can use parallel functionality (for h>1) as long as the
+#' user has set up a \code{\link[future]{plan}} using the future package.
+#' @aliases residuals
+#' @method residuals tsets.estimate
+#' @rdname residuals
+#' @export
+#'
+#'
 residuals.tsets.estimate <- function(object, raw = FALSE, h = 1, seed = NULL, trace = FALSE, ...)
 {
   if (h > 1) {
@@ -33,12 +75,40 @@ residuals.tsets.estimate <- function(object, raw = FALSE, h = 1, seed = NULL, tr
   return(out)
 }
 
+#' Model Log-Likelihood
+#'
+#' @description Extract the log-likelihood from an estimated model.
+#' @param object an object of class \dQuote{tsets.estimate}.
+#' @param ... not currently used.
+#' @return Returns an object of class logLik. This is a number with at least one
+#' attribute, "df" (degrees of freedom), giving the number of (estimated)
+#' parameters in the model.
+#' @aliases logLik
+#' @method logLik tsets.estimate
+#' @rdname logLik
+#' @export
+#'
+#'
 logLik.tsets.estimate <- function(object, ...)
 {
   np <- NROW(object$model$setup$parmatrix[which(object$model$setup$parmatrix[,"estimate"] == 1),])
   structure(-0.5 * object$model$loglik, df = np + 1, class = "logLik")
 }
 
+
+#' Performance Metrics
+#'
+#' @description Performance metrics from an estimated or predicted tsets model.
+#' @param object an object of class \dQuote{tsets.estimate} or \dQuote{tsets.predict}
+#' @param actual the actual data matched to the dates of the forecasts.
+#' @param alpha the coverage level for distributional forecast metrics.
+#' @param ... not currently used.
+#' @aliases tsmetrics
+#' @method tsmetrics tsets.predict
+#' @rdname tsmetrics
+#' @export
+#'
+#'
 tsmetrics.tsets.predict = function(object, actual, alpha = 0.1, ...)
 {
   n <- NCOL(object$distribution)
@@ -56,6 +126,11 @@ tsmetrics.tsets.predict = function(object, actual, alpha = 0.1, ...)
   data.frame("h" = n, "MAPE" = m_mape, "MASE" = m_mase, "MSLRE" = m_mslre, "BIAS" = m_bias, "MIS" = m_mis, "CRPS" = m_crps)
 }
 
+#' @method tsmetrics tsets.estimate
+#' @rdname tsmetrics
+#' @export
+#'
+#'
 tsmetrics.tsets.estimate = function(object, ...)
 {
   # residuals diagnostics
@@ -88,6 +163,20 @@ tsmetrics.tsets.estimate = function(object, ...)
              "MSLRE" = m_mslre, "BIAS" = m_bias)
 }
 
+#' Akaike's An Information Criterion
+#'
+#' @description Extract the AIC from an estimated model.
+#' @param object an object of class \dQuote{tsets.estimate}.
+#' @param ... not currently used.
+#' @param k the penalty per parameter to be used; the default k = 2 is the
+#' classical AIC.
+#' @return a numeric value.
+#' @aliases AIC
+#' @method AIC tsets.estimate
+#' @rdname AIC
+#' @export
+#'
+#'
 AIC.tsets.estimate <- function(object, ..., k = 2)
 {
   np <- NROW(object$model$setup$parmatrix[which(object$model$setup$parmatrix[,"required"] == 1),])
@@ -101,6 +190,18 @@ AIC.tsets.estimate <- function(object, ..., k = 2)
   return(aic)
 }
 
+#' Extract Model Coefficients
+#'
+#' @description Extract the estimated coefficients of a model.
+#' @param object an object of class \dQuote{tsets.estimate}.
+#' @param ... not currently used.
+#' @return a numeric named vector.
+#' @aliases coef
+#' @method coef tsets.estimate
+#' @rdname coef
+#' @export
+#'
+#'
 coef.tsets.estimate = function(object, ...)
 {
   v <- object$model$setup$parmatrix[which(object$model$setup$parmatrix[,"required"] == 1),1]
@@ -108,6 +209,23 @@ coef.tsets.estimate = function(object, ...)
   return(v)
 }
 
+#' Model Estimation Summary
+#'
+#' @description Summary method for class \dQuote{tsets.estimate}
+#' @param object an object of class \dQuote{tsets.estimate}.
+#' @param digits integer, used for number formatting. Optionally, to avoid
+#' scientific notation, set \sQuote{options(scipen=999)}.
+#' @param ... not currently used.
+#' @return A printout of the parameter summary, model type and some model metrics.
+#' When estimated using autodiff, the standard errors, t-values and p-values will
+#' also be printed. In this case, if the parameters are close to their upper or
+#' lower bounds then it is very likely that these values will be NaN.
+#' @aliases summary
+#' @method summary tsets.estimate
+#' @rdname summary
+#' @export
+#'
+#'
 summary.tsets.estimate = function(object, digits = 4, ...)
 {
   parmatrix <- object$model$setup$parmatrix
@@ -199,6 +317,8 @@ summary.tsets.estimate = function(object, digits = 4, ...)
   pvalues <- 2*(1 - pnorm(abs(tvalues)))
   return(data.frame("Std. Error" = se,"t value" = tvalues, "Pr(>|t|)" = pvalues, check.names = FALSE))
 }
+
+
 .tables.tsets.estimate <- function(object, digits = 4, ...)
 {
   parmatrix <- object$model$setup$parmatrix
@@ -280,7 +400,21 @@ summary.tsets.estimate = function(object, digits = 4, ...)
   return(list(model = modelx, params = printout, n = n, info = infomatrix, metrics = mmatrix, selection = selection))
 }
 
-
+#' Estimation Summary Report (pdf format)
+#'
+#' @description Generates a pdf summary of the estimated model.
+#' @param object an object of class \dQuote{tsets.estimate}.
+#' @param output_dir directory where the output is written and the object saved.
+#' @param args additional list of arguments used in the generation of the report.
+#' Only name is currently used to display the name of the data series.
+#' @param ... not currently used.
+#' @return A pdf file.
+#' @aliases tsreport
+#' @method tsreport tsets.estimate
+#' @rdname tsreport
+#' @export
+#'
+#'
 tsreport.tsets.estimate <- function(object, output_dir = "/", args = list(name = NULL), ...)
 {
   saveRDS(object, file = paste0(output_dir,"/tsets_estimate_tmp.rds"))
@@ -295,6 +429,25 @@ tsreport.tsets.estimate <- function(object, output_dir = "/", args = list(name =
 }
 
 
+#' Model Decomposition
+#'
+#' @description Decomposes the estimated model or prediction into its component
+#' parts (states).
+#' @param object an object of class \dQuote{tsets.estimate} or \dQuote{tsets.predict}
+#' @param simplify whether to return the components as Trend (Level + Slope), Seasonal,
+#' X and Irregular.
+#' @param ... not currently used.
+#' @return For the estimated object, returns an xts matrix of the state components
+#' (including error). For the predicted object, a list with the simulated object
+#' which includes the predictive distribution matrix of the state components and
+#' their estimated values, inheriting class \dQuote{tsmodel.predict} (for pretty
+#' plotting functionality).
+#' @aliases tsdecompose
+#' @method tsdecompose tsets.estimate
+#' @rdname tsdecompose
+#' @export
+#'
+#'
 tsdecompose.tsets.estimate <- function(object, simplify = FALSE, ...)
 {
   d <- object$spec$target$index
@@ -342,6 +495,10 @@ tsdecompose.tsets.estimate <- function(object, simplify = FALSE, ...)
   }
 }
 
+#' @method tsdecompose tsets.predict
+#' @rdname tsdecompose
+#' @export
+#'
 tsdecompose.tsets.predict <- function(object, simplify = FALSE, ...)
 {
   if (simplify) {
@@ -370,7 +527,26 @@ tsdecompose.tsets.predict <- function(object, simplify = FALSE, ...)
   }
 }
 
-
+#' Model Specification Extractor
+#'
+#' @description Extracts a model specification (class \dQuote{tsets.spec}) from
+#' an object of class \dQuote{tsets.estimate}.
+#' @param object an object of class \dQuote{tsets.estimate}.
+#' @param y an optional new xts vector.
+#' @param lambda an optional lambda parameter for the Box Cox transformation (if
+#' previously used).
+#' @param xreg an optional matrix of regressors.
+#' @param ... not currently used.
+#' @note This function is used by other functions in the package such as the
+#' backtest which requires rebuilding the specification for each re-estimation
+#' step with updated data but keeping all else equal.
+#' @return An object of class \dQuote{tsets.spec}.
+#' @aliases tsspec
+#' @method tsspec tsets.estimate
+#' @rdname tsspec
+#' @export
+#'
+#'
 tsspec.tsets.estimate <- function(object, y = NULL, lambda = NULL, xreg = NULL, ...)
 {
     if (is.null(y)) {

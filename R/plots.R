@@ -1,3 +1,17 @@
+#' Object Plots
+#'
+#' @description Plots for objects generated from the tsets functions.
+#' @param x an object of class \dQuote{tsets.estimate}, \dQuote{tsets.simulate}
+#' or \dQuote{tsets.profile}.
+#' @param y not used.
+#' @param type type of profile plot for objects of class \dQuote{tsets.profile}.
+#' @param ... additional arguments passed to the underlying plot function.
+#' @aliases plot
+#' @method plot tsets.estimate
+#' @rdname plot
+#' @export
+#'
+#'
 plot.tsets.estimate = function(x, y = NULL, ...)
 {
   opar <- par()
@@ -85,6 +99,8 @@ plot.tsets.estimate = function(x, y = NULL, ...)
   suppressWarnings(par(opar))
 }
 
+#' @method plot tsets.simulate
+#' @rdname plot
 plot.tsets.simulate <- function(x, y = NULL, ...)
 {
   opar <- par()
@@ -120,6 +136,8 @@ plot.tsets.simulate <- function(x, y = NULL, ...)
   suppressWarnings(par(opar))
 }
 
+#' @method plot tsets.profile
+#' @rdname plot
 plot.tsets.profile <- function(x, y = NULL, type = c("metrics", "coef"), ...)
 {
   opar <- par()

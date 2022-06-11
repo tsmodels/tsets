@@ -1,4 +1,49 @@
-# automatic model selection
+#' Automatic Model Selection
+#'
+#' @description Automatic model selection based on choice of criteria.
+#' @details The function estimates a number of different models from the class
+#' of valid ETS models in the packages, with and without dampening, with and
+#' without a power term (for MAM and MAN models).
+#' @param y an xts vector.
+#' @param xreg an optional xts matrix of regressors (pre-lagged).
+#' @param frequency the frequency of y (if using a seasonal model).
+#' @param transformation a valid transformation for y from the \dQuote{tstransform}
+#' function in the \dQuote{tsaux} package (currently box-cox or logit are
+#' available) applied to additive models only.
+#' @param lambda the Box Cox power parameter (lambda). If NA will estimate this
+#' using the method of Guerrero.
+#' @param lower the lower bound for the transformation.
+#' @param upper the upper bound for the transformation.
+#' @param normalized_seasonality whether to impose Roberts-McKenzie normalized
+#' seasonality.
+#' @param metric the selection metric to use. Valid metrics are \sQuote{AIC},
+#' \sQuote{BIC}, \sQuote{AICc}, \sQuote{MASE} and \sQuote{MAPE}. If lambda is
+#' not NULL, then those models which admit a Box-Cox transformation (additive
+#' error models) will not be comparable with the other models.
+#' @param additive_only whether to limit to additive models only.
+#' @param solver the solver to use for estimation.
+#' @param control the solver control parameters.
+#' @param power_model whether to include the power MAM models.
+#' @param include_damped whether to include damped models in the selection.
+#' @param trace whether to show the progress bar. The user is expected to have
+#' set up appropriate handlers for this using the \dQuote{progressr} package.
+#' @param return_table whether to return the table with the enumerated options,
+#' ranked by metric,for each combination of those options used.
+#' @param scale whether to rescale the data using y/max(y) (only for additive models).
+#' This sometimes helps in the optimization.
+#' @param seasonal_init whether the initial seasonal states are estimated or
+#' fixed (set to a backcast approximation).
+#' @param autodiff whether to use automatic differentiation
+#' (see \code{\link{estimate.tsets.spec}}).
+#' @param ... not used.
+#' @return An object of class \dQuote{tsets.estimate} which also inherits
+#' class \dQuote{tsets.select}
+#' @note The function can use parallel functionality as long as the user has set up a
+#' \code{\link[future]{plan}} using the future package.
+#' @aliases auto_ets
+#' @rdname auto_ets
+#' @export
+#'
 auto_ets = function(y, xreg = NULL, transformation = NULL, lambda = NULL, lower = 0, upper = 1,
                     metric = "AIC", frequency = NULL, normalized_seasonality = TRUE,
                     additive_only = FALSE, solver = "nlminb",

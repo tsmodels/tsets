@@ -1,3 +1,33 @@
+#' Model Estimation
+#'
+#' @description Estimates a model given a specification object using
+#' maximum likelihood.
+#' @param object an object of class \dQuote{tsets.spec}.
+#' @param solver one of either \dQuote{solnp}, \dQuote{nlminb} or \dQuote{optim}.
+#' The latter uses the L-BFGS-B algorithm from the lbfgsb3c package. For option
+#' \dQuote{autodiff}, valid solvers are \dQuote{nlminb} and \dQuote{nloptr}.
+#' @param control solver control parameters.
+#' @param autodiff whether to use automatic differentiation for estimation.
+#' This makes use of the tsetsad package.
+#' @param ... only additional argument which can be passed when choosing autodiff
+#' is that of \dQuote{use_hessian} which tells the solver to make use of second
+#' derivatives.
+#' @details The maximum likelihood estimation uses bound constraints for some of
+#' the parameters as described in the online book of tsmodels. Additionally, for
+#' parameters which are constrained to be less than another parameter
+#' (e.g. beta<alpha), a simple barrier approach is adopted which adjusts the
+#' previous likelihood value upwards by some fixed percentage of that value
+#' during the minimization. The observation variance is not directly estimated
+#' but instead concentrated out of the likelihood. When autodiff is TRUE with
+#' the nloptr solver, the constraints and their jacobian are explicitly used,
+#' whilst a soft barrier constraint is used in the case of the nlminb solver.
+#' @return An object of class \dQuote{tsets.estimate}
+#' @aliases estimate
+#' @method estimate tsets.spec
+#' @rdname estimate
+#' @export
+#'
+#'
 estimate.tsets.spec <- function(object, solver = "nlminb", control = list(trace = 0), autodiff = TRUE, ...)
 {
   # create an environment for the soft barrier solver
