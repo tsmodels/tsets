@@ -101,6 +101,7 @@ plot.tsets.estimate = function(x, y = NULL, ...)
 
 #' @method plot tsets.simulate
 #' @rdname plot
+#' @export
 plot.tsets.simulate <- function(x, y = NULL, ...)
 {
   opar <- par()
@@ -138,6 +139,7 @@ plot.tsets.simulate <- function(x, y = NULL, ...)
 
 #' @method plot tsets.profile
 #' @rdname plot
+#' @export
 plot.tsets.profile <- function(x, y = NULL, type = c("metrics", "coef"), ...)
 {
   opar <- par()
